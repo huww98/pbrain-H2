@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Huww98.FiveInARow.Engine;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Huww98.FiveInARow.Engine
+namespace Huww98.FiveInARow.EngineAdapter
 {
     class MoveMadeEventArgs : EventArgs
     {
@@ -54,11 +55,6 @@ namespace Huww98.FiveInARow.Engine
         }
 
         public event EventHandler<MoveMadeEventArgs> MoveMade;
-    }
-
-    enum Player : byte
-    {
-        Empty, Own, Opponent
     }
 
     struct Move

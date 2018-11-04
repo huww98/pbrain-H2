@@ -6,6 +6,11 @@ using System.Threading.Tasks;
 
 namespace Huww98.FiveInARow.Engine
 {
+    public enum Player : byte
+    {
+        Empty, Own, Opponent, Outside
+    }
+
     interface IEngine
     {
         TimeSpan TurnTimeout {set;}

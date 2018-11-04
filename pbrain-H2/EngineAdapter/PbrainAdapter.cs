@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Huww98.FiveInARow.Engine;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Huww98.FiveInARow.Engine
+namespace Huww98.FiveInARow.EngineAdapter
 {
     class PbrainAdapter
     {
