@@ -12,7 +12,7 @@ namespace Huww98.FiveInARow.Engine
         TimeSpan MatchTimeout {set;}
 
         void SetBoard(Player[,] board);
-        Task<(int, int)> Think();
-        void OpponentMove(int x, int y);
+        Task<(int x, int y)> Think();
+        void OpponentMove((int x, int y) position);
     }
 }

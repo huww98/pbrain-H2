@@ -33,7 +33,7 @@ namespace Huww98.FiveInARow.Engine
 
         public void OpponentMove(int x, int y)
         {
-            Engine.OpponentMove(x, y);
+            Engine.OpponentMove((x, y));
         }
 
         public async void BeginTurn()

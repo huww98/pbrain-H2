@@ -11,29 +11,29 @@ namespace Huww98.FiveInARow.Engine
         public TimeSpan TurnTimeout { get; set; }
         public TimeSpan MatchTimeout { get; set; }
 
-        Player[,] board;
+        Board board;
         Random random = new Random();
 
-        public void OpponentMove(int x, int y)
+        public void OpponentMove((int x, int y) position)
         {
-            board[x, y] = Player.Opponent;
+            board.PlaceChessPiece(position, Player.Opponent);
         }
 
         public void SetBoard(Player[,] board)
         {
-            this.board = board;
+            this.board = new Board(board);
         }
 
         public Task<(int, int)> Think()
         {
-            int x, y;
+            (int x, int y) p;
             do
             {
-                x = random.Next(board.GetUpperBound(0) + 1);
-                y = random.Next(board.GetUpperBound(1) + 1);
-            } while (board[x,y] != Player.Empty);
-            board[x, y] = Player.Own;
-            return Task.FromResult((x, y));
+                p.x = random.Next(board.Width);
+                p.y = random.Next(board.Height);
+            } while (!board.IsEmpty(p));
+            board.PlaceChessPiece(p, Player.Own);
+            return Task.FromResult(p);
         }
     }
 }
