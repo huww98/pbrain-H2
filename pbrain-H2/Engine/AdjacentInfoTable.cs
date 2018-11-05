@@ -56,8 +56,10 @@ namespace Huww98.FiveInARow.Engine
         public byte[,] Own;
         public byte[,] Opponent;
 
-        public bool ExactFive { get; set; }
-        public bool ForbiddenCheck { get; set; }
+        public bool ExactFive { get; set; } = false;
+        public bool ForbiddenCheck { get; set; } = false;
+
+        public Player Winner { get; private set; } = Player.Empty;
 
         public AdjacentInfoTable(int size, DirectionOffset offset)
         {
@@ -99,6 +101,11 @@ namespace Huww98.FiveInARow.Engine
                 table[next, od] = adjacentCount;
                 var previous = i + offset[od] * (table[i, od] + 1);
                 table[previous, d] = adjacentCount;
+
+                if (adjacentCount == 5 || (!ExactFive && adjacentCount > 5))
+                {
+                    Winner = player;
+                }
             }
         }
     }

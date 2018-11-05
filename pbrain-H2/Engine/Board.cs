@@ -20,6 +20,8 @@ namespace Huww98.FiveInARow.Engine
         public bool ExactFive { set => adjacentInfoTable.ExactFive = value; }
         public bool ForbiddenCheck { set => adjacentInfoTable.ForbiddenCheck = value; }
 
+        public Player Winner => adjacentInfoTable.Winner;
+
         public Board(Player[,] board)
         {
             Width = board.GetUpperBound(0) + 1;

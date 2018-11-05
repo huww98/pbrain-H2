@@ -46,5 +46,50 @@ namespace Huww98.FiveInARow.Engine.Tests
             Assert.Equal(0, table.Own[11, Direction.MainDiagonal]);
 
         }
+
+        [Fact]
+        public void Winner()
+        {
+            var board = new Player[100];
+            board[22] = board[33] = board[44] = board[55] = Player.Own;
+            var offset = new DirectionOffset(10);
+            var table = new AdjacentInfoTable(board, offset);
+
+            table.PlaceChessPiece(66, Player.Own);
+
+            Assert.Equal(Player.Own, table.Winner);
+        }
+
+        [Fact]
+        public void MoreThanFiveWinner()
+        {
+            var board = new Player[100];
+            board[22] = board[33] = board[44] = board[55] = board[77] = Player.Own;
+            var offset = new DirectionOffset(10);
+            var table = new AdjacentInfoTable(board, offset)
+            {
+                ExactFive = false
+            };
+
+            table.PlaceChessPiece(66, Player.Own);
+
+            Assert.Equal(Player.Own, table.Winner);
+        }
+
+        [Fact]
+        public void ExactFiveWinner()
+        {
+            var board = new Player[100];
+            board[22] = board[33] = board[44] = board[55] = board[77] = Player.Own;
+            var offset = new DirectionOffset(10);
+            var table = new AdjacentInfoTable(board, offset)
+            {
+                ExactFive = true
+            };
+
+            table.PlaceChessPiece(66, Player.Own);
+
+            Assert.Equal(Player.Empty, table.Winner);
+        }
     }
 }
