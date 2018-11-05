@@ -18,8 +18,6 @@ namespace Huww98.FiveInARow.EngineAdapter
         public IEngine Engine { get; }
 
         (int x, int y) boardSize;
-        public TimeSpan TurnTimeout {set{ Engine.TurnTimeout = value; }}
-        public TimeSpan MatchTimeout {set{ Engine.MatchTimeout = value; }}
 
         public EngineControl(IEngine engine)
         {

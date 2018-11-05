@@ -10,19 +10,21 @@ namespace Huww98.FiveInARow.EngineAdapter
     class PbrainAdapter
     {
         EngineControl controller;
+        private readonly IEngine engine;
         private readonly TextReader reader;
         private readonly TextWriter writer;
 
-        public PbrainAdapter(IEngine engine ,TextReader reader, TextWriter writer)
+        public PbrainAdapter(IEngine engine, TextReader reader, TextWriter writer)
         {
+            this.engine = engine;
             this.reader = reader;
             this.writer = writer;
             controller = new EngineControl(engine);
         }
 
-        public PbrainAdapter(IEngine engine) 
-            : this(engine, new StreamReader(Console.OpenStandardInput()), new StreamWriter(Console.OpenStandardOutput()))
-        {}
+        public PbrainAdapter(IEngine engine)
+            : this(engine, Console.In, Console.Out)
+        { }
 
         public About About { get; set; }
 
@@ -92,14 +94,35 @@ namespace Huww98.FiveInARow.EngineAdapter
             switch (key)
             {
                 case "timeout_turn":
-                    controller.TurnTimeout = TimeSpan.FromMilliseconds(int.Parse(value));
+                    engine.TurnTimeout = TimeSpan.FromMilliseconds(int.Parse(value));
                     break;
                 case "timeout_match":
-                    int v = int.Parse(value);
-                    controller.MatchTimeout = v == 0 ? TimeSpan.MaxValue : TimeSpan.FromMilliseconds(v);
-                    break;
+                    {
+                        int v = int.Parse(value);
+                        engine.MatchTimeout = v == 0 ? TimeSpan.MaxValue : TimeSpan.FromMilliseconds(v);
+                        break;
+                    }
                 case "time_left":
-                    controller.TurnTimeout = TimeSpan.FromMilliseconds(int.Parse(value));
+                    engine.TurnTimeout = TimeSpan.FromMilliseconds(int.Parse(value));
+                    break;
+                case "rule":
+                    {
+                        var v = int.Parse(value);
+                        if ((v & 1) == 1)
+                        {
+                            engine.ExactFive = true;
+                        }
+                        if ((v & 4) == 4)
+                        {
+                            engine.ForbiddenCheck = true;
+                        }
+                        break;
+                    }
+                case "fb_check":
+                    engine.ForbiddenCheck = value == "1";
+                    break;
+                default:
+                    writer.Message($"unknown INFO {key}");
                     break;
             }
         }
@@ -155,5 +178,8 @@ namespace Huww98.FiveInARow.EngineAdapter
 
         public static Task OK(this TextWriter writer)
             => writer.WriteLineAndFlush("OK");
+
+        public static Task Message(this TextWriter writer, string message)
+            => writer.WriteLineAndFlush($"MESSAGE {message}");
     }
 }

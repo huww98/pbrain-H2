@@ -50,11 +50,14 @@ namespace Huww98.FiveInARow.Engine
         }
     }
 
-    public struct AdjacentInfoTable
+    public class AdjacentInfoTable
     {
         private readonly DirectionOffset offset;
         public byte[,] Own;
         public byte[,] Opponent;
+
+        public bool ExactFive { get; set; }
+        public bool ForbiddenCheck { get; set; }
 
         public AdjacentInfoTable(int size, DirectionOffset offset)
         {

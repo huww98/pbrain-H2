@@ -10,6 +10,8 @@ namespace Huww98.FiveInARow.Engine
     {
         public TimeSpan TurnTimeout { get; set; }
         public TimeSpan MatchTimeout { get; set; }
+        public bool ExactFive { set => board.ExactFive = value; }
+        public bool ForbiddenCheck { set => board.ForbiddenCheck = value; }
 
         Board board;
         Random random = new Random();

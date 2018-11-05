@@ -17,6 +17,9 @@ namespace Huww98.FiveInARow.Engine
         private readonly AdjacentInfoTable adjacentInfoTable;
         private readonly DirectionOffset directionOffset;
 
+        public bool ExactFive { set => adjacentInfoTable.ExactFive = value; }
+        public bool ForbiddenCheck { set => adjacentInfoTable.ForbiddenCheck = value; }
+
         public Board(Player[,] board)
         {
             Width = board.GetUpperBound(0) + 1;

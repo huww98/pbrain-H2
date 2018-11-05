@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Huww98.FiveInARow.Engine
@@ -13,8 +10,11 @@ namespace Huww98.FiveInARow.Engine
 
     interface IEngine
     {
-        TimeSpan TurnTimeout {set;}
-        TimeSpan MatchTimeout {set;}
+        TimeSpan TurnTimeout { set; }
+        TimeSpan MatchTimeout { set; }
+
+        bool ExactFive { set; }
+        bool ForbiddenCheck { set; }
 
         void SetBoard(Player[,] board);
         Task<(int x, int y)> Think();
