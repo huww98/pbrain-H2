@@ -1,11 +1,21 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Huww98.FiveInARow.Engine
 {
     public enum Player : byte
     {
-        Empty, Own, Opponent, Outside
+        Empty, Own, Opponent, Outside, Blocked
+    }
+
+    public static class PlayerExtension
+    {
+        public static Player OppositePlayer(this Player p)
+        {
+            Debug.Assert(p == Player.Own || p == Player.Opponent);
+            return p == Player.Own ? Player.Opponent : Player.Own;
+        }
     }
 
     interface IEngine

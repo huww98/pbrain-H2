@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Huww98.FiveInARow.Engine
@@ -11,14 +13,17 @@ namespace Huww98.FiveInARow.Engine
         public int Height { get; }
 
         private readonly Player[] board;
-        private readonly BitArray empty;
+        public BitArray EmptyMask { get; }
         private readonly AdjacentInfoTable adjacentInfoTable;
         private readonly DirectionOffset directionOffset;
 
         public bool ExactFive { set => adjacentInfoTable.ExactFive = value; }
         public Player HasForbiddenPlayer { get; set; }
 
-        public Player Winner => adjacentInfoTable.Winner;
+        public Player Winner { get; private set; } = Player.Empty;
+
+        public event EventHandler<BoardChangedEventArgs> ChessPlaced;
+        public event EventHandler<BoardChangedEventArgs> ChessTakenBack;
 
         public Board(Player[,] board)
         {
@@ -28,9 +33,20 @@ namespace Huww98.FiveInARow.Engine
 
             this.board = InitializeExtendedBoard(board);
 
-            empty = new BitArray(this.board.Select(p => p == Player.Empty).ToArray());
+            EmptyMask = new BitArray(this.board.Select(p => p == Player.Empty).ToArray());
             directionOffset = new DirectionOffset(extendedWidth);
             adjacentInfoTable = new AdjacentInfoTable(this.board, directionOffset);
+        }
+
+        public IEnumerable<(int x, int y)> AllPosition()
+        {
+            for (int i = 0; i < Width; i++)
+            {
+                for (int j = 0; j < Height; j++)
+                {
+                    yield return (i, j);
+                }
+            }
         }
 
         private Player[] InitializeExtendedBoard(Player[,] board)
@@ -38,12 +54,9 @@ namespace Huww98.FiveInARow.Engine
             int extendedHeight = Height + 2;
 
             var extendedBoard = new Player[extendedWidth * extendedHeight];
-            for (int i = 0; i < Width; i++)
+            foreach (var (i, j) in AllPosition())
             {
-                for (int j = 0; j < Height; j++)
-                {
-                    extendedBoard[FlattenedIndex((i, j))] = board[i, j];
-                }
+                extendedBoard[FlattenedIndex((i, j))] = board[i, j];
             }
             foreach (int i in new[] { 0, extendedWidth - 1 })
             {
@@ -63,31 +76,61 @@ namespace Huww98.FiveInARow.Engine
             return extendedBoard;
         }
 
-        private int FlattenedIndex((int x, int y) p)
-        {
-            return (p.y + 1) * extendedWidth + p.x + 1;
-        }
+        public int FlattenedIndex((int x, int y) p)
+            => (p.y + 1) * extendedWidth + p.x + 1;
 
-        private bool IsEmpty(int i) => empty[i];
+        public bool IsEmpty(int i) => EmptyMask[i];
         public bool IsEmpty((int x, int y) position)
             => IsEmpty(FlattenedIndex(position));
 
         private void PlaceChessPiece(int i, Player p)
         {
-            board[i] = p;
-            empty[i] = false;
-            adjacentInfoTable.PlaceChessPiece(i, p);
+            Debug.Assert(Winner == Player.Empty);
+
+            if (IsForbidden(i, p))
+            {
+                this.Winner = p.OppositePlayer();
+                return;
+            }
+            PlaceChessPieceUnchecked(i, p);
+            this.Winner = adjacentInfoTable.Winner;
+            this.ChessPlaced?.Invoke(this, new BoardChangedEventArgs(i, p));
         }
 
         public void PlaceChessPiece((int x, int y) position, Player p)
             => PlaceChessPiece(FlattenedIndex(position), p);
 
-        private void TakeBack(int i)
+        private void PlaceChessPieceUnchecked(int i, Player p)
+        {
+            board[i] = p;
+            EmptyMask[i] = false;
+            adjacentInfoTable.PlaceChessPiece(i, p);
+        }
+
+        public void TakeBack((int x, int y) position)
+            => TakeBack(FlattenedIndex(position));
+
+        public void TakeBack(int i)
+        {
+            var p = board[i];
+            TakeBackUnchecked(i);
+            this.Winner = Player.Empty;
+            this.ChessTakenBack?.Invoke(this, new BoardChangedEventArgs(i, p));
+        }
+
+        private void TakeBackUnchecked(int i)
         {
             var p = board[i];
             board[i] = Player.Empty;
-            empty[i] = true;
+            EmptyMask[i] = true;
             adjacentInfoTable.TakeBack(i, p);
+        }
+
+        private void TryInternal(int i, Player p, Action action)
+        {
+            PlaceChessPieceUnchecked(i, p);
+            action();
+            TakeBackUnchecked(i);
         }
 
         private bool IsForbidden(int i, Player p)
@@ -164,13 +207,15 @@ namespace Huww98.FiveInARow.Engine
 
                     if (threeKeyPoints.Count >= 2)
                     {
-                        PlaceChessPiece(i, p);
-                        foreach (var kps in threeKeyPoints)
+                        TryInternal(i, p, () =>
                         {
-                            if (!kps.All(kp=>IsForbidden(kp, p)))
-                                threeCount++;
-                        }
-                        TakeBack(i);
+                            foreach (var kps in threeKeyPoints)
+                            {
+                                if (!kps.All(kp => IsForbidden(kp, p)))
+                                    threeCount++;
+                            }
+                        });
+                        
                         threeKeyPoints.Clear();
                         if (threeCount >= 2)
                         {
@@ -185,5 +230,17 @@ namespace Huww98.FiveInARow.Engine
 
         public bool IsForbidden((int x, int y) position, Player p)
             => IsForbidden(FlattenedIndex(position), p);
+    }
+
+    public class BoardChangedEventArgs : EventArgs
+    {
+        public BoardChangedEventArgs(int i, Player p)
+        {
+            Index = i;
+            Player = p;
+        }
+
+        public int Index { get; }
+        public Player Player { get; }
     }
 }
