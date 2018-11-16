@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Huww98.FiveInARow.Engine
 {
@@ -48,13 +46,18 @@ namespace Huww98.FiveInARow.Engine
         {
             get => offset[i];
         }
+
+        public int Shift(int i, int direction, int distance)
+        {
+            return i + offset[direction] * distance;
+        }
     }
 
     public class AdjacentInfoTable
     {
         private readonly DirectionOffset offset;
-        public byte[,] Own;
-        public byte[,] Opponent;
+        public PlayerAdjacentInfoTable Own;
+        public PlayerAdjacentInfoTable Opponent;
 
         public bool ExactFive { get; set; } = false;
         public bool ForbiddenCheck { get; set; } = false;
@@ -63,8 +66,8 @@ namespace Huww98.FiveInARow.Engine
 
         public AdjacentInfoTable(int size, DirectionOffset offset)
         {
-            Own = new byte[size, Direction.TotalDirection];
-            Opponent = new byte[size, Direction.TotalDirection];
+            Own = new PlayerAdjacentInfoTable(this, size);
+            Opponent = new PlayerAdjacentInfoTable(this, size);
             this.offset = offset;
         }
 
@@ -72,41 +75,86 @@ namespace Huww98.FiveInARow.Engine
         {
             for (int i = 0; i < board.Length; i++)
             {
-                PlaceChessPiece(i, board[i]);
+                var p = board[i];
+                if (p == Player.Own || p == Player.Opponent)
+                {
+                    PlaceChessPiece(i, board[i]);
+                }
+            }
+        }
+
+        public PlayerAdjacentInfoTable this[Player player]
+        {
+            get
+            {
+                return player == Player.Own ? Own :
+                       player == Player.Opponent ? Opponent :
+                       throw new InvalidOperationException();
             }
         }
 
         public void PlaceChessPiece(int i, Player player)
         {
-            byte[,] table;
-            if (player == Player.Own)
+            var table = this[player];
+
+            if (table.PlaceChessPiece(i))
             {
-                table = Own;
+                Winner = player;
             }
-            else if (player == Player.Opponent)
+        }
+
+        public void TakeBack(int i, Player player)
+            => this[player].TakeBack(i);
+
+        public struct PlayerAdjacentInfoTable
+        {
+            private readonly AdjacentInfoTable parent;
+            public byte[,] Data;
+
+            public int this[int i, Direction d] => Data[i,d];
+
+            public PlayerAdjacentInfoTable(AdjacentInfoTable parent, int size)
             {
-                table = Opponent;
-            }
-            else
-            {
-                return;
+                this.parent = parent;
+                Data = new byte[size, Direction.TotalDirection];
             }
 
-            for (int d = 0; d < Direction.TotalDirection / 2; d++)
+            /// <returns>whether the player is the winner</returns>
+            public bool PlaceChessPiece(int i)
             {
-                var od = Direction.Opposite(d);
-                var adjacentCount = (byte)(table[i, od] + 1 + table[i, d]);
-
-                var next = i + offset[d] * (table[i, d] + 1);
-                table[next, od] = adjacentCount;
-                var previous = i + offset[od] * (table[i, od] + 1);
-                table[previous, d] = adjacentCount;
-
-                if (adjacentCount == 5 || (!ExactFive && adjacentCount > 5))
+                bool win = false;
+                for (int d = 0; d < Direction.TotalDirection / 2; d++)
                 {
-                    Winner = player;
+                    var adjacentCount = AdjacentCount(i, d, out var od);
+
+                    var next = JumpNext(i, d);
+                    Data[next, od] = adjacentCount;
+                    var previous = JumpNext(i, od);
+                    Data[previous, d] = adjacentCount;
+
+                    win = win || adjacentCount == 5 || (!parent.ExactFive && adjacentCount > 5);
+                }
+                return win;
+            }
+
+            public void TakeBack(int i)
+            {
+                for (int d = 0; d < Direction.TotalDirection; d++)
+                {
+                    var od = Direction.Opposite(d);
+                    var next = JumpNext(i, d);
+                    Data[next, od] = Data[i, d];
                 }
             }
+
+            public byte AdjacentCount(int i, int direction, out int oppositeDirection)
+            {
+                oppositeDirection = Direction.Opposite(direction);
+                return (byte)(Data[i, oppositeDirection] + 1 + Data[i, direction]);
+            }
+
+            public int JumpNext(int i, int direction)
+                => parent.offset.Shift(i, direction, Data[i, direction] + 1);
         }
     }
 }

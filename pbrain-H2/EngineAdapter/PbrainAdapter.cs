@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Huww98.FiveInARow.EngineAdapter
@@ -84,9 +85,19 @@ namespace Huww98.FiveInARow.EngineAdapter
             }
         }
 
+        SemaphoreSlim mutex = new SemaphoreSlim(1, 1);
+
         private async void Controller_MoveMade(object sender, MoveMadeEventArgs e)
         {
-            await writer.WriteLineAndFlush($"{e.X},{e.Y}");
+            await mutex.WaitAsync();
+            try
+            {
+                await writer.WriteLineAndFlush($"{e.X},{e.Y}");
+            }
+            finally
+            {
+                mutex.Release();
+            }
         }
 
         private void ProcessInfo(string key, string value)

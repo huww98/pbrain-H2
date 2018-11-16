@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace Huww98.FiveInARow.Engine.Tests
@@ -28,5 +30,46 @@ namespace Huww98.FiveInARow.Engine.Tests
             Assert.False(board.IsEmpty((6, 2)));
             Assert.True(board.IsEmpty((4, 7)));
         }
+
+        [Theory]
+        [MemberData(nameof(GetForbiddenCheckData))]
+        public void Fobidden(string[] strBoard, bool expected)
+        {
+            strBoard = strBoard.Select(s => s.Replace(" ", "")).ToArray();
+
+            var arrayBoard = new Player[strBoard[0].Length, strBoard.Length];
+            (int, int) verifyPosition = (-1,-1);
+            for (int i = 0; i <= arrayBoard.GetUpperBound(0); i++)
+            {
+                for (int j = 0; j <= arrayBoard.GetUpperBound(1); j++)
+                {
+                    ref var p = ref arrayBoard[i, j];
+                    switch (strBoard[j][i])
+                    {
+                        case '_':
+                            p = Player.Empty;
+                            break;
+                        case 'o':
+                            p = Player.Own;
+                            break;
+                        case 'x':
+                            p = Player.Opponent;
+                            break;
+                        case '*':
+                            verifyPosition = (i, j);
+                            p = Player.Empty;
+                            break;
+                        default:
+                            throw new InvalidOperationException();
+                    }
+                }
+            }
+
+            var board = new Board(arrayBoard);
+            Assert.Equal(expected, board.IsForbidden(verifyPosition, Player.Own));
+        }
+
+        public static IEnumerable<object[]> GetForbiddenCheckData()
+            => ForbiddenCheckData.Data();
     }
 }
