@@ -65,7 +65,7 @@ namespace Huww98.FiveInARow.Engine.Tests
                 }
             }
 
-            var board = new Board(arrayBoard);
+            var board = new Board(arrayBoard) { HasForbiddenPlayer = Player.Own };
             Assert.Equal(expected, board.IsForbidden(verifyPosition, Player.Own));
         }
 

@@ -16,7 +16,7 @@ namespace Huww98.FiveInARow.Engine
         private readonly DirectionOffset directionOffset;
 
         public bool ExactFive { set => adjacentInfoTable.ExactFive = value; }
-        public bool ForbiddenCheck { set => adjacentInfoTable.ForbiddenCheck = value; }
+        public Player HasForbiddenPlayer { get; set; }
 
         public Player Winner => adjacentInfoTable.Winner;
 
@@ -92,6 +92,11 @@ namespace Huww98.FiveInARow.Engine
 
         private bool IsForbidden(int i, Player p)
         {
+            if (p != HasForbiddenPlayer)
+            {
+                return false;
+            }
+
             var atable = adjacentInfoTable[p];
 
             for (int d = 0; d < Direction.TotalDirection / 2; d++) // 若此步能赢则不为禁手

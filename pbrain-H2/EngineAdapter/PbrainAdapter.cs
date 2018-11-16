@@ -125,12 +125,12 @@ namespace Huww98.FiveInARow.EngineAdapter
                         }
                         if ((v & 4) == 4)
                         {
-                            engine.ForbiddenCheck = true;
+                            controller.HasForbiddenCheck = true;
                         }
                         break;
                     }
                 case "fb_check":
-                    engine.ForbiddenCheck = value == "1";
+                    controller.HasForbiddenCheck = value == "1";
                     break;
                 default:
                     writer.Message($"unknown INFO {key}");

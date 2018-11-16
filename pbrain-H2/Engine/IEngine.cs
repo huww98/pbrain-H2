@@ -14,7 +14,7 @@ namespace Huww98.FiveInARow.Engine
         TimeSpan MatchTimeout { set; }
 
         bool ExactFive { set; }
-        bool ForbiddenCheck { set; }
+        Player HasForbiddenPlayer { set; }
 
         void SetBoard(Player[,] board);
         Task<(int x, int y)> Think();

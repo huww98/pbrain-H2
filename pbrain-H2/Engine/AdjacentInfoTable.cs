@@ -60,7 +60,6 @@ namespace Huww98.FiveInARow.Engine
         public PlayerAdjacentInfoTable Opponent;
 
         public bool ExactFive { get; set; } = false;
-        public bool ForbiddenCheck { get; set; } = false;
 
         public Player Winner { get; private set; } = Player.Empty;
 
