@@ -11,9 +11,14 @@ namespace Huww98.FiveInARow.Engine
 
     public static class PlayerExtension
     {
+        public static bool IsTruePlayer(this Player p)
+        {
+            return p == Player.Own || p == Player.Opponent;
+        }
+
         public static Player OppositePlayer(this Player p)
         {
-            Debug.Assert(p == Player.Own || p == Player.Opponent);
+            Debug.Assert(p.IsTruePlayer());
             return p == Player.Own ? Player.Opponent : Player.Own;
         }
     }

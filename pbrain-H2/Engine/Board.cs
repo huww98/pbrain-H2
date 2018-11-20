@@ -77,13 +77,24 @@ namespace Huww98.FiveInARow.Engine
         }
 
         public int FlattenedIndex((int x, int y) p)
-            => (p.y + 1) * extendedWidth + p.x + 1;
+        {
+            Debug.Assert(p.x >= 0 && p.x < Width);
+            Debug.Assert(p.y >= 0 && p.y < Height);
+            return (p.y + 1) * extendedWidth + p.x + 1;
+        }
+
+        public (int x, int y) UnflattenedIndex(int i)
+        {
+            int y = i % extendedWidth - 1;
+            int x = i - y - 1;
+            return (x, y);
+        }
 
         public bool IsEmpty(int i) => EmptyMask[i];
         public bool IsEmpty((int x, int y) position)
             => IsEmpty(FlattenedIndex(position));
 
-        private void PlaceChessPiece(int i, Player p)
+        public void PlaceChessPiece(int i, Player p)
         {
             Debug.Assert(Winner == Player.Empty);
 
@@ -102,6 +113,7 @@ namespace Huww98.FiveInARow.Engine
 
         private void PlaceChessPieceUnchecked(int i, Player p)
         {
+            Debug.Assert(p.IsTruePlayer());
             board[i] = p;
             EmptyMask[i] = false;
             adjacentInfoTable.PlaceChessPiece(i, p);
@@ -131,6 +143,13 @@ namespace Huww98.FiveInARow.Engine
             PlaceChessPieceUnchecked(i, p);
             action();
             TakeBackUnchecked(i);
+        }
+
+        public void Try(int i, Player p, Action action)
+        {
+            PlaceChessPiece(i, p);
+            action();
+            TakeBack(i);
         }
 
         private bool IsForbidden(int i, Player p)
