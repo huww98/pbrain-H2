@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace Huww98.FiveInARow.Engine
 {
@@ -75,9 +76,9 @@ namespace Huww98.FiveInARow.Engine
             for (int i = 0; i < board.Length; i++)
             {
                 var p = board[i];
-                if (p == Player.Own || p == Player.Opponent)
+                if (p.IsTruePlayer())
                 {
-                    PlaceChessPiece(i, board[i]);
+                    PlaceChessPiece(i, p);
                 }
             }
         }
@@ -86,9 +87,8 @@ namespace Huww98.FiveInARow.Engine
         {
             get
             {
-                return player == Player.Own ? Own :
-                       player == Player.Opponent ? Opponent :
-                       throw new InvalidOperationException();
+                Debug.Assert(player.IsTruePlayer());
+                return player == Player.Own ? Own : Opponent;
             }
         }
 

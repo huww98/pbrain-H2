@@ -16,6 +16,7 @@ namespace Huww98.FiveInARow.Engine
         public BitArray EmptyMask { get; }
         private readonly AdjacentInfoTable adjacentInfoTable;
         private readonly DirectionOffset directionOffset;
+        public ZobristHash ZobristHash { get; }
 
         public bool ExactFive { set => adjacentInfoTable.ExactFive = value; }
         public Player HasForbiddenPlayer { get; set; }
@@ -36,6 +37,7 @@ namespace Huww98.FiveInARow.Engine
             EmptyMask = new BitArray(this.board.Select(p => p == Player.Empty).ToArray());
             directionOffset = new DirectionOffset(extendedWidth);
             adjacentInfoTable = new AdjacentInfoTable(this.board, directionOffset);
+            ZobristHash = new ZobristHash(this.board);
         }
 
         public IEnumerable<(int x, int y)> AllPosition()
@@ -48,6 +50,9 @@ namespace Huww98.FiveInARow.Engine
                 }
             }
         }
+
+        public IEnumerable<int> AllPositionFlattened()
+            => AllPosition().Select(FlattenedIndex);
 
         private Player[] InitializeExtendedBoard(Player[,] board)
         {
@@ -117,6 +122,7 @@ namespace Huww98.FiveInARow.Engine
             board[i] = p;
             EmptyMask[i] = false;
             adjacentInfoTable.PlaceChessPiece(i, p);
+            ZobristHash.Set(i, p);
         }
 
         public void TakeBack((int x, int y) position)
@@ -136,6 +142,7 @@ namespace Huww98.FiveInARow.Engine
             board[i] = Player.Empty;
             EmptyMask[i] = true;
             adjacentInfoTable.TakeBack(i, p);
+            ZobristHash.Set(i, p);
         }
 
         private void TryInternal(int i, Player p, Action action)

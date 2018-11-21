@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,13 +17,14 @@ namespace Huww98.FiveInARow.Engine
         Evaluator evaluator;
         MoveGenerator moveGenerator;
         SearchTreeNode rootNode;
+        Dictionary<long, SearchTreeNode> transpositionTable;
 
         DateTime thinkStartTime;
         DateTime scheduredEndTime;
 
         private void updateRootNode(int i)
         {
-            rootNode = rootNode.Children.Single(n => n.Index == i);
+            rootNode = rootNode.Children.Single(n => n.i == i).node;
         }
 
         public void OpponentMove((int x, int y) position)
@@ -36,7 +39,8 @@ namespace Huww98.FiveInARow.Engine
             this.board = new Board(board);
             this.evaluator = new Evaluator(this.board);
             this.moveGenerator = new MoveGenerator(this.board);
-            rootNode = new SearchTreeNode(default); // We don't care root node index
+            this.transpositionTable = new Dictionary<long, SearchTreeNode>();
+            rootNode = new SearchTreeNode();
         }
 
         private int DoSearch()
@@ -48,7 +52,7 @@ namespace Huww98.FiveInARow.Engine
                 {
                     break;
                 }
-                AlphaBetaSearch(maxLayer, -Evaluator.MaxScore, Evaluator.MaxScore, ref rootNode, Player.Own);
+                AlphaBetaSearch(maxLayer, -Evaluator.MaxScore, Evaluator.MaxScore, rootNode, Player.Own);
                 if (rootNode.GameOver)
                 {
                     break;
@@ -56,49 +60,68 @@ namespace Huww98.FiveInARow.Engine
                 maxLayer++;
             }
             rootNode.SortChildren();
-            return rootNode.Children[0].Index;
+            return rootNode.Children[0].i;
         }
 
-        private int AlphaBetaSearch(int layer, int alpha, int beta, ref SearchTreeNode node, Player player)
+        private int AlphaBetaSearch(int layer, int alpha, int beta, SearchTreeNode node, Player player)
         {
             if (node.GameOver)
             {
                 return node.LastScore;
             }
+            if (layer <= node.LastSearchLayer) // possible reuse score
+            {
+                if (node.IsLastScoreExact || node.LastScore > beta)
+                    return node.LastScore;
+            }
+
+            // No score reuse, begin evaluate this node.
+            Debug.Assert(layer <= byte.MaxValue);
+            node.LastSearchLayer = (byte)layer;
+
             if (board.Winner != Player.Empty || layer == 0)
             {
                 node.LastScore = evaluator.Evaluate(player);
+                node.IsLastScoreExact = true;
                 return node.LastScore;
             }
             if (node.Children == null)
             {
                 node.Children = moveGenerator.GenerateMoves()
-                    .Select(i => new SearchTreeNode(i))
+                    .Select(i => {
+                        var hash = board.ZobristHash.NextHash(i, player);
+                        var newNode = transpositionTable.GetValueOrDefault(hash) ?? new SearchTreeNode();
+                        return (i, newNode);
+                    })
                     .ToArray();
             }
             else
             {
                 node.SortChildren();
             }
-            for (int i = 0; i < node.Children.Length; i++)
+            int currentScore = int.MinValue;
+            foreach (var (i, nextNode) in node.Children)
             {
                 if (DateTime.Now > scheduredEndTime)
                 {
                     break;
                 }
-                ref var child = ref node.Children[i];
-                board.PlaceChessPiece(child.Index, player);
-                int score = -AlphaBetaSearch(layer - 1, -beta, -alpha, ref child, player.OppositePlayer());
-                board.TakeBack(child.Index);
+                board.PlaceChessPiece(i, player);
+                int score = -AlphaBetaSearch(layer - 1, -beta, -alpha, nextNode, player.OppositePlayer());
+                board.TakeBack(i);
 
+                currentScore = Math.Max(currentScore, score);
                 alpha = Math.Max(alpha, score);
-                if (alpha >= beta)
+                if (currentScore >= beta)
                 {
-                    break;
+                    node.LastScore = currentScore;
+                    node.IsLastScoreExact = false;
+                    return currentScore;
                 }
             }
-            node.LastScore = alpha;
-            return alpha;
+            node.LastScore = currentScore;
+            node.IsLastScoreExact = true;
+            return currentScore;
         }
 
         public async Task<(int, int)> Think()
@@ -112,26 +135,20 @@ namespace Huww98.FiveInARow.Engine
     }
 
     /// <summary>
-    /// This structure should be as simple as possible, since there will be so many instances.
+    /// This class should be as simple as possible, since there will be so many instances.
     /// </summary>
-    struct SearchTreeNode
+    class SearchTreeNode
     {
-        public SearchTreeNode[] Children;
-        public int Index;
+        public (int i, SearchTreeNode node)[] Children;
         public int LastScore;
-
-        public SearchTreeNode(int index)
-        {
-            this.Children = null;
-            this.Index = index;
-            this.LastScore = default;
-        }
+        public bool IsLastScoreExact;
+        public byte LastSearchLayer;
 
         public bool GameOver => Math.Abs(LastScore) == Evaluator.MaxScore;
 
         public void SortChildren ()
         {
-            Array.Sort(Children, (a, b) => a.LastScore - b.LastScore);
+            Array.Sort(Children, (a, b) => a.node.LastScore - b.node.LastScore);
         }
     }
 }
