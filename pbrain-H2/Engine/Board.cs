@@ -15,12 +15,14 @@ namespace Huww98.FiveInARow.Engine
         private readonly Player[] board;
         public BitArray EmptyMask { get; }
         private readonly AdjacentInfoTable adjacentInfoTable;
-        private readonly DirectionOffset directionOffset;
+        public DirectionOffset DirectionOffset { get; }
         public ZobristHash ZobristHash { get; }
 
         public bool ExactFive { set => adjacentInfoTable.ExactFive = value; }
         public Player HasForbiddenPlayer { get; set; }
 
+        public Player this[int i] => board[i];
+        public int FlattenedSize => this.board.Length;
         public Player Winner { get; private set; } = Player.Empty;
 
         public event EventHandler<BoardChangedEventArgs> ChessPlaced;
@@ -35,8 +37,8 @@ namespace Huww98.FiveInARow.Engine
             this.board = InitializeExtendedBoard(board);
 
             EmptyMask = new BitArray(this.board.Select(p => p == Player.Empty).ToArray());
-            directionOffset = new DirectionOffset(extendedWidth);
-            adjacentInfoTable = new AdjacentInfoTable(this.board, directionOffset);
+            DirectionOffset = new DirectionOffset(extendedWidth);
+            adjacentInfoTable = new AdjacentInfoTable(this.board, DirectionOffset);
             ZobristHash = new ZobristHash(this.board);
         }
 
