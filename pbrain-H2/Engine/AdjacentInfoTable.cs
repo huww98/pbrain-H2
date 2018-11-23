@@ -23,6 +23,10 @@ namespace Huww98.FiveInARow.Engine
         public const int TotalDirection = 8;
 
         public static int Opposite(int d) => (d + 4) % 8;
+
+        /// <summary>
+        /// Opposite direction
+        /// </summary>
         public Direction O => Direction.Opposite(value);
     }
 

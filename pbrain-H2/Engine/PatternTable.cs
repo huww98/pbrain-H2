@@ -11,16 +11,14 @@ namespace Huww98.FiveInARow.Engine
             table = new int[1 << beforeSize, 1 << afterSize];
         }
 
-        public int this[PatternCode beforePattern, PatternCode afterPattern]
+        public ref int this[PatternCode beforePattern, PatternCode afterPattern]
         {
-            get => table[beforePattern.Code, afterPattern.Code];
-            set => table[beforePattern.Code, afterPattern.Code] = value;
+            get => ref table[beforePattern.Code, afterPattern.Code];
         }
 
-        public int this[(PatternCode before, PatternCode after) p]
+        public ref int this[(PatternCode before, PatternCode after) p]
         {
-            get => this[p.before.Code, p.after.Code];
-            set => this[p.before.Code, p.after.Code] = value;
+            get => ref this[p.before.Code, p.after.Code];
         }
 
         public IEnumerable<(PatternCode before, PatternCode after)> EveryPattern()
@@ -95,8 +93,8 @@ namespace Huww98.FiveInARow.Engine
 
         private LengthPatternTable[,] InitializePatterns()
         {
-            LengthPatternTable[,] patterns = new LengthPatternTable[MaxRadius, MaxRadius];
-            for (int i = 0; i < MaxRadius; i++)
+            LengthPatternTable[,] patterns = new LengthPatternTable[MaxRadius + 1, MaxRadius + 1];
+            for (int i = 0; i <= MaxRadius; i++)
             {
                 for (int j = 0; j <= i; j++)
                 {
@@ -107,23 +105,37 @@ namespace Huww98.FiveInARow.Engine
             return patterns;
         }
 
+        public void NormalizePattern(ref Pattern before, ref Pattern after)
+        {
+            if (after.Length > before.Length)
+            {
+                var temp = after;
+                after = before;
+                before = temp;
+            }
+        }
+
+        private ref int LocateScore(Pattern before, Pattern after)
+        {
+            return ref patterns[before.Length, after.Length][before.Code, after.Code];
+        }
+
         /// <summary>
         /// 这个属性是对称的，例如[a,b] == [b,a]
         /// </summary>
         /// <returns>Score for pattern</returns>
-        public int this[Pattern before, Pattern after]
+        public ref int this[Pattern before, Pattern after]
         {
             get
             {
-                if (after.Length > before.Length)
-                {
-                    var temp = after;
-                    after = before;
-                    before = temp;
-                }
-
-                return patterns[before.Length, after.Length][before.Code, after.Code];
+                NormalizePattern(ref before, ref after);
+                return ref LocateScore(before, after);
             }
+        }
+
+        public ref int this[(Pattern before, Pattern after) p]
+        {
+            get => ref this[p.before, p.after];
         }
     }
 
@@ -145,7 +157,7 @@ namespace Huww98.FiveInARow.Engine
             {
                 i += offset;
 
-                if (Board[i] != Player.Empty || pattern.Length >= PatternTable.MaxRadius)
+                if (pattern.Length >= PatternTable.MaxRadius)
                 {
                     break;
                 }
@@ -153,6 +165,10 @@ namespace Huww98.FiveInARow.Engine
                 if (Board[i] == p)
                 {
                     pattern.Code.Set(pattern.Length);
+                }
+                else if (Board[i] != Player.Empty) // Hit border or opponent's piece
+                {
+                    break;
                 }
                 pattern.Length++;
             }

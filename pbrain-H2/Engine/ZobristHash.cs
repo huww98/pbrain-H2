@@ -6,14 +6,43 @@ using System.Text;
 
 namespace Huww98.FiveInARow.Engine
 {
+    public class ZobristRandom
+    {
+        private readonly long[,] randomTable;
+
+        public ZobristRandom(int boardSize)
+        {
+            randomTable = new long[2, boardSize];
+            Random random = new Random();
+            for (int i = 0; i < 2; i++)
+            {
+                for (int j = 0; j < boardSize; j++)
+                {
+                    var buffer = new byte[8];
+                    random.NextBytes(buffer);
+                    randomTable[i, j] = BitConverter.ToInt64(buffer);
+                }
+            }
+        }
+
+        private int PlayerIndex(Player p)
+        {
+            Debug.Assert(p.IsTruePlayer());
+            return p == Player.Own ? 0 : 1;
+        }
+
+        public long this[Player p, int i] => randomTable[PlayerIndex(p), i];
+    }
+
     public class ZobristHash
     {
-        readonly long[,] randomTable;
+        private readonly ZobristRandom randomTable;
+
         public long Hash { get; private set; } = 0;
 
-        public ZobristHash(Player[] board)
+        public ZobristHash(Player[] board, ZobristRandom random = null)
         {
-            randomTable = InitializeRandomTable(board.Length);
+            this.randomTable = random ?? new ZobristRandom(board.Length);
 
             for (int i = 0; i < board.Length; i++)
             {
@@ -24,30 +53,6 @@ namespace Huww98.FiveInARow.Engine
             }
         }
 
-        private int PlayerIndex(Player p)
-        {
-            Debug.Assert(p.IsTruePlayer());
-            return p == Player.Own ? 0 : 1;
-        }
-
-        private long[,] InitializeRandomTable(int boardSize)
-        {
-            var t = new long[2, boardSize];
-
-            Random random = new Random();
-            for (int i = 0; i < 2; i++)
-            {
-                for (int j = 0; j < boardSize; j++)
-                {
-                    var buffer = new byte[8];
-                    random.NextBytes(buffer);
-                    t[i, j] = BitConverter.ToInt64(buffer);
-                }
-            }
-
-            return t;
-        }
-
         public void Set(int i, Player p)
         {
             Hash = NextHash(i, p);
@@ -55,8 +60,7 @@ namespace Huww98.FiveInARow.Engine
 
         public long NextHash(int i, Player p)
         {
-            int playerIndex = PlayerIndex(p);
-            return Hash ^ randomTable[playerIndex, i];
+            return Hash ^ randomTable[p, i];
         }
     }
 }

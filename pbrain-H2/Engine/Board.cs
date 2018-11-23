@@ -92,8 +92,8 @@ namespace Huww98.FiveInARow.Engine
 
         public (int x, int y) UnflattenedIndex(int i)
         {
-            int y = i % extendedWidth - 1;
-            int x = i - y - 1;
+            int x = i % extendedWidth - 1;
+            int y = (i - x - 1) / extendedWidth - 1;
             return (x, y);
         }
 

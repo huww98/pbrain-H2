@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace Huww98.FiveInARow.Engine
 {
@@ -10,12 +11,13 @@ namespace Huww98.FiveInARow.Engine
 
         public const int MaxScore = int.MaxValue;
 
-        public PatternTable PatternTable { get; } = new PatternTable();
+        public PatternTable PatternTable { get; }
         public int NextStepScore { get; set; } = 0;
 
-        public Evaluator(Board board)
+        public Evaluator(Board board, PatternTable patternTable)
         {
             this.board = board;
+            this.PatternTable = patternTable;
             this.patternExtractor = new CachedPatternExtractor(new PatternExtractor(board));
             this.ownScoreCalc = new CachedScoreCalculator(board.FlattenedSize);
 
@@ -81,8 +83,6 @@ namespace Huww98.FiveInARow.Engine
             UpdateRelevantScore(e.Index);
         }
 
-        // TODO：初始化 refactor cache table to different class. 
-
         private void UpdateRelevantScore(int index)
         {
             for (int d = 0; d < Direction.TotalDirection; d++)
@@ -94,6 +94,8 @@ namespace Huww98.FiveInARow.Engine
                 {
                     currentIndex += offset;
                     var p = board[currentIndex];
+                    if (p == Player.Outside)
+                        break;
                     if (!p.IsTruePlayer())
                         continue;
 
@@ -101,7 +103,7 @@ namespace Huww98.FiveInARow.Engine
                     var otherSidePattern = patternExtractor[currentIndex, d];
                     var newScore = NewScore(newPattern, otherSidePattern, board[currentIndex]);
                     var mainDirection = Math.Min(d, od);
-                    ownScoreCalc.Update(index, d, newScore);
+                    ownScoreCalc.Update(currentIndex, mainDirection, newScore);
                 }
             }
         }
@@ -126,7 +128,7 @@ namespace Huww98.FiveInARow.Engine
         }
     }
 
-    class CachedPatternExtractor
+    public class CachedPatternExtractor
     {
         private readonly PatternExtractor extractor;
         private readonly Pattern[,] patternCache;
@@ -134,7 +136,7 @@ namespace Huww98.FiveInARow.Engine
         public CachedPatternExtractor(PatternExtractor extractor)
         {
             this.extractor = extractor;
-            var cache = new Pattern[extractor.Board.FlattenedSize, Direction.TotalDirection];
+            patternCache = new Pattern[extractor.Board.FlattenedSize, Direction.TotalDirection];
             InitializeCache();
         }
 
@@ -142,7 +144,7 @@ namespace Huww98.FiveInARow.Engine
         {
             foreach (var i in extractor.Board.AllPositionFlattened())
             {
-                for (int d = 0; d < Direction.TotalDirection / 2; d++)
+                for (int d = 0; d < Direction.TotalDirection; d++)
                 {
                     Update(i, d);
                 }
@@ -171,6 +173,8 @@ namespace Huww98.FiveInARow.Engine
 
         public void Update(int i, Direction d, int newScore)
         {
+            Debug.Assert(d < Direction.TotalDirection / 2);
+
             var oldScore = scoreCache[i, d];
             CurrentScore -= oldScore;
             CurrentScore += newScore;

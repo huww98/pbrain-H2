@@ -31,6 +31,28 @@ namespace Huww98.FiveInARow.Engine.Tests
             Assert.True(board.IsEmpty((4, 7)));
         }
 
+        [Fact]
+        public void IndexTransform()
+        {
+            Board board = new Board(new Player[10, 10]);
+            int i = board.FlattenedIndex((3, 4));
+            Assert.Equal(64, i);
+            Assert.Equal((3, 4), board.UnflattenedIndex(i));
+        }
+
+        [Fact]
+        public void Empty()
+        {
+            var boardArray = new Player[10, 10];
+            boardArray[1, 7] = Player.Own;
+            var board = new Board(boardArray);
+
+            Assert.False(board.IsEmpty((1, 7)));
+            Assert.True(board.IsEmpty((1, 8)));
+            board.PlaceChessPiece((1, 8), Player.Own);
+            Assert.False(board.IsEmpty((1, 8)));
+        }
+
         [Theory]
         [MemberData(nameof(GetForbiddenCheckData))]
         public void Fobidden(string[] strBoard, bool expected)

@@ -37,7 +37,7 @@ namespace Huww98.FiveInARow.Engine
         public void SetBoard(Player[,] board)
         {
             this.board = new Board(board);
-            this.evaluator = new Evaluator(this.board);
+            this.evaluator = new Evaluator(this.board, new PatternTable());
             this.moveGenerator = new MoveGenerator(this.board);
             this.transpositionTable = new Dictionary<long, SearchTreeNode>();
             rootNode = new SearchTreeNode();
