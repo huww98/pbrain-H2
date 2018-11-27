@@ -9,7 +9,7 @@ namespace Huww98.FiveInARow.Engine
         private readonly CachedPatternExtractor patternExtractor;
         private readonly CachedScoreCalculator ownScoreCalc;
 
-        public const int MaxScore = int.MaxValue;
+        public const int MaxScore = 1000000000;
 
         public PatternTable PatternTable { get; }
         public int NextStepScore { get; set; } = 0;

@@ -114,7 +114,7 @@ namespace Huww98.FiveInARow.EngineAdapter
                         break;
                     }
                 case "time_left":
-                    engine.TurnTimeout = TimeSpan.FromMilliseconds(int.Parse(value));
+                    engine.MatchTimeout = TimeSpan.FromMilliseconds(int.Parse(value));
                     break;
                 case "rule":
                     {

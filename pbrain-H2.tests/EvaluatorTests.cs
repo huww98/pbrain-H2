@@ -44,30 +44,4 @@ namespace Huww98.FiveInARow.Engine.Tests
             Assert.Equal(-3, evaluator.Evaluate(Player.Opponent));
         }
     }
-
-    static class PatternExtension
-    {
-        public static (Pattern,Pattern) ToPatternPair(this string str)
-        {
-            var strs = str.Split('*');
-
-            string beforeStr = new string(strs[0].Reverse().ToArray());
-            return (beforeStr.ToPattern(), strs[1].ToPattern());
-        }
-
-        public static Pattern ToPattern(this string str)
-        {
-            Pattern pattern = new Pattern();
-            str = str.Replace(" ", "");
-            foreach (var c in str)
-            {
-                if (c == 'o')
-                {
-                    pattern.Code.Set(pattern.Length);
-                }
-                pattern.Length++;
-            }
-            return pattern;
-        }
-    }
 }

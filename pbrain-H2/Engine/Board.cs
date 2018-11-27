@@ -105,13 +105,10 @@ namespace Huww98.FiveInARow.Engine
         {
             Debug.Assert(Winner == Player.Empty);
 
-            if (IsForbidden(i, p))
-            {
-                this.Winner = p.OppositePlayer();
-                return;
-            }
+            bool forbiddenMove = IsForbidden(i, p);
+
             PlaceChessPieceUnchecked(i, p);
-            this.Winner = adjacentInfoTable.Winner;
+            this.Winner = forbiddenMove ? p.OppositePlayer() : adjacentInfoTable.Winner;
             this.ChessPlaced?.Invoke(this, new BoardChangedEventArgs(i, p));
         }
 
@@ -121,6 +118,7 @@ namespace Huww98.FiveInARow.Engine
         private void PlaceChessPieceUnchecked(int i, Player p)
         {
             Debug.Assert(p.IsTruePlayer());
+            Debug.Assert(board[i] == Player.Empty);
             board[i] = p;
             EmptyMask[i] = false;
             adjacentInfoTable.PlaceChessPiece(i, p);
@@ -140,6 +138,7 @@ namespace Huww98.FiveInARow.Engine
 
         private void TakeBackUnchecked(int i)
         {
+            Debug.Assert(board[i] != Player.Empty);
             var p = board[i];
             board[i] = Player.Empty;
             EmptyMask[i] = true;
@@ -243,7 +242,7 @@ namespace Huww98.FiveInARow.Engine
                                     threeCount++;
                             }
                         });
-                        
+
                         threeKeyPoints.Clear();
                         if (threeCount >= 2)
                         {
@@ -258,6 +257,42 @@ namespace Huww98.FiveInARow.Engine
 
         public bool IsForbidden((int x, int y) position, Player p)
             => IsForbidden(FlattenedIndex(position), p);
+
+        public string StringBoard(int? nextPositionIndex = null)
+        {
+            string[] lines = new string[Height + 1];
+            lines[0] = string.Join(' ', Enumerable.Repeat(' ', 1).Concat(Enumerable.Range(0, Width).Select(i => i.ToString().Last())));
+            for (int i = 0; i < Height; i++)
+            {
+                string[] pieces = new string[Width + 1];
+                pieces[0] = i.ToString().Last().ToString();
+                for (int j = 0; j < Width; j++)
+                {
+                    int index = FlattenedIndex((j, i));
+                    switch (this[index])
+                    {
+                        case Player.Empty:
+                            pieces[j + 1] = "_";
+                            break;
+                        case Player.Own:
+                            pieces[j + 1] = "o";
+                            break;
+                        case Player.Opponent:
+                            pieces[j + 1] = "x";
+                            break;
+                        default:
+                            pieces[j + 1] = "?";
+                            break;
+                    }
+                    if (index == nextPositionIndex)
+                    {
+                        pieces[index] = "*";
+                    }
+                }
+                lines[i + 1] = string.Join(' ', pieces);
+            }
+            return string.Join('\n', lines);
+        }
     }
 
     public class BoardChangedEventArgs : EventArgs

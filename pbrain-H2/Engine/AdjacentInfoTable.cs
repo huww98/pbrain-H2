@@ -107,7 +107,10 @@ namespace Huww98.FiveInARow.Engine
         }
 
         public void TakeBack(int i, Player player)
-            => this[player].TakeBack(i);
+        {
+            Winner = Player.Empty;
+            this[player].TakeBack(i);
+        }
 
         public struct PlayerAdjacentInfoTable
         {

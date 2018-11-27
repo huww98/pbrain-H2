@@ -76,16 +76,16 @@ namespace Huww98.FiveInARow.EngineAdapter
         {
             var newBoard = new Player[boardSize.x, boardSize.y];
 
-            var firstMove = moves.Where(m => m.Player == Player.Own || m.Player == Player.Opponent)
-                                 .Cast<Move?>()
-                                 .FirstOrDefault();
-            FirstPlayer = firstMove.HasValue ? firstMove.Value.Player : Player.Empty;
-
             foreach (var m in moves)
             {
                 newBoard[m.X, m.Y] = m.Player;
             }
             Engine.SetBoard(newBoard);
+
+            var firstMove = moves.Where(m => m.Player == Player.Own || m.Player == Player.Opponent)
+                                 .Cast<Move?>()
+                                 .FirstOrDefault();
+            FirstPlayer = firstMove != null ? firstMove.Value.Player : Player.Empty;
         }
 
         public event EventHandler<MoveMadeEventArgs> MoveMade;

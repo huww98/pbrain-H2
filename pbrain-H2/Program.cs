@@ -2,6 +2,8 @@
 using Huww98.FiveInARow.EngineAdapter;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +15,10 @@ namespace Huww98.FiveInARow
         static async Task Main(string[] args)
         {
             var engine = new AlphaBetaEngine();
+            //engine.TraceSource.Listeners.Clear();
+            //engine.TraceSource.Listeners.Add(new TextWriterTraceListener(new StreamWriter(@"C:\Users\huww\Documents\engine.log", false)));
+            //engine.TraceSource.Switch.Level = SourceLevels.All;
+
             var pbrain = new PbrainAdapter(engine)
             {
                 About = new About

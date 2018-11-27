@@ -58,6 +58,9 @@ namespace Huww98.FiveInARow.Engine.Tests
             table.PlaceChessPiece(66, Player.Own);
 
             Assert.Equal(Player.Own, table.Winner);
+
+            table.TakeBack(66, Player.Own);
+            Assert.Equal(Player.Empty, table.Winner);
         }
 
         [Fact]

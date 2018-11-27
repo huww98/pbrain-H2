@@ -23,9 +23,9 @@ namespace Huww98.FiveInARow.Engine
 
         public IEnumerable<(PatternCode before, PatternCode after)> EveryPattern()
         {
-            for (int i = 0; i <= table.GetUpperBound(1); i++)
+            for (int i = 0; i <= table.GetUpperBound(0); i++)
             {
-                for (int j = 0; j <= table.GetUpperBound(2); j++)
+                for (int j = 0; j <= table.GetUpperBound(1); j++)
                 {
                     yield return (i, j);
                 }
@@ -136,6 +136,20 @@ namespace Huww98.FiveInARow.Engine
         public ref int this[(Pattern before, Pattern after) p]
         {
             get => ref this[p.before, p.after];
+        }
+
+        public IEnumerable<(Pattern before, Pattern after)> EveryPattern()
+        {
+            for (int i = 0; i <= MaxRadius; i++)
+            {
+                for (int j = 0; j <= i; j++)
+                {
+                    foreach (var (b,a) in patterns[i,j].EveryPattern())
+                    {
+                        yield return (new Pattern { Code = b, Length = i }, new Pattern { Code = a, Length = j });
+                    }
+                }
+            }
         }
     }
 
