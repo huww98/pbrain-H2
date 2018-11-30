@@ -21,6 +21,7 @@ namespace Huww98.FiveInARow.Engine
         MoveGenerator moveGenerator;
         SearchTreeNode rootNode;
         Dictionary<long, SearchTreeNode> transpositionTable = new Dictionary<long, SearchTreeNode>();
+        KillerTable killerTable = new KillerTable();
 
         DateTime thinkStartTime;
         // TODO: Update time limit when thinking.
@@ -91,15 +92,20 @@ namespace Huww98.FiveInARow.Engine
             return HasTimeLimit && DateTime.Now > scheduredEndTime;
         }
 
+        private int Ply(int layer) => maxLayer - layer;
+
         private int DoSearch()
         {
             // Reinitialize it so that it does not get too large
             this.transpositionTable = new Dictionary<long, SearchTreeNode>();
-            int maxLayer = 2;
+            this.killerTable = new KillerTable();
+            int maxLayer = 2; // We need to search at least 2 layer to trigger the generation of child nodes.
             while (true)
             {
                 TraceSource.TraceInformation($"Searching, max layer {maxLayer}.");
                 AlphaBetaSearch(maxLayer);
+                TraceSource.TraceInformation($"Search complete, max layer {maxLayer}, reached leaf: {leafReached}.");
+
                 if (rootNode.GameOver)
                 {
                     TraceSource.TraceInformation($"Game over, {(rootNode.LastScore.Exact > 0 ? "I" : "Opponent")} Win");
@@ -122,14 +128,69 @@ namespace Huww98.FiveInARow.Engine
             return nextIndex;
         }
 
+        private int leafReached;
+        private int maxLayer;
+
         public int AlphaBetaSearch(int layer)
         {
+            leafReached = 0;
+            maxLayer = layer;
             return AlphaBetaSearch(layer, -Evaluator.MaxScore, Evaluator.MaxScore, rootNode, Player.Own);
         }
 
+        [Conditional("DEBUG")]
         void Trace(int id, string message)
         {
             TraceSource.TraceEvent(TraceEventType.Verbose, id, $"{Board.ZobristHash.Hash:X16} {message}");
+        }
+
+        enum MoveOrigin
+        {
+            Normal, Killer
+        }
+
+        private IEnumerable<(int i, SearchTreeNode node, MoveOrigin origin)> Children(int layer, SearchTreeNode node, Player player)
+        {
+            List<SearchTreeNode> killerNodes = new List<SearchTreeNode>();
+            foreach (var i in killerTable.Killers(Ply(layer)))
+            {
+                if (Board.IsEmpty(i))
+                {
+                    var killerNode = node.Children?.SingleOrDefault((p) => p.i == i).node ?? new SearchTreeNode();
+                    killerNodes.Add(killerNode);
+                    yield return (i, killerNode, MoveOrigin.Killer);
+                }
+            }
+            if (node.Children == null)
+            {
+                node.Children = moveGenerator.GenerateMoves()
+                    .Select(i => {
+                        var hash = Board.ZobristHash.NextHash(i, player);
+                        if (!transpositionTable.TryGetValue(hash, out var newNode))
+                        {
+                            newNode = new SearchTreeNode();
+                        }
+                        // TODO: How to insert record to transpositionTable?
+                        return (i, newNode);
+                    })
+                    .ToArray();
+            }
+            else
+            {
+                node.SortChildren();
+            }
+
+            // TODO: maybe no child? chessboard full?
+            Debug.Assert(node.Children.Length > 0);
+            foreach (var item in node.Children)
+            {
+                if (killerNodes.Contains(item.node))
+                {
+                    continue;
+                }
+                yield return (item.i, item.node, MoveOrigin.Normal);
+            }
+            
         }
 
         /// <param name="layer">How many layer to search. 1 means only this node. less than 1 is invalid.</param>
@@ -165,27 +226,12 @@ namespace Huww98.FiveInARow.Engine
                 nextScore.Exact = Evaluator.Evaluate(player);
                 Trace(7, $"Leaf: {nextScore}");
                 node.NewScore(layer, nextScore);
+                leafReached++;
                 return nextScore.Exact;
             }
-            if (node.Children == null)
-            {
-                node.Children = moveGenerator.GenerateMoves()
-                    .Select(i => {
-                        var hash = Board.ZobristHash.NextHash(i, player);
-                        var newNode = transpositionTable.GetValueOrDefault(hash) ?? new SearchTreeNode();
-                        return (i, newNode);
-                    })
-                    .ToArray();
-            }
-            else
-            {
-                node.SortChildren();
-            }
 
-            // TODO: maybe no child?
-            Debug.Assert(node.Children.Length > 0);
             int currentScore = int.MinValue;
-            foreach (var (i, nextNode) in node.Children)
+            foreach (var (i, nextNode, origin) in Children(layer, node, player))
             {
                 if (TimeLimitExceeded())
                 {
@@ -194,7 +240,7 @@ namespace Huww98.FiveInARow.Engine
                 }
 
                 Trace(10, $"Next layer: {i}");
-                Board.PlaceChessPiece(i, player);
+                Board.PlaceChessPiece(i, player, skipForbiddenCheck: nextNode.LastSearchLayer > 0);
                 int score = -AlphaBetaSearch(layer - 1, -beta, -alpha, nextNode, player.OppositePlayer());
                 Board.TakeBack(i);
                 Trace(11, $"Return from: {i}, score: {score}");
@@ -211,6 +257,10 @@ namespace Huww98.FiveInARow.Engine
                 {
                     Trace(5, $"Returning. Cut: {nextScore}");
                     node.NewScore(layer, nextScore);
+                    if (origin != MoveOrigin.Killer)
+                    {
+                        killerTable.NewKiller(Ply(layer), i);
+                    }
                     return currentScore;
                 }
             }
@@ -222,7 +272,7 @@ namespace Huww98.FiveInARow.Engine
 
         public async Task<(int, int)> Think()
         {
-            scheduredEndTime = DateTime.Now + TurnTimeout;
+            scheduredEndTime = DateTime.Now + TurnTimeout - TimeSpan.FromSeconds(0.2);
             int i = await Task.Run(() => DoSearch());
             SelfMove(i);
             return Board.UnflattenedIndex(i);

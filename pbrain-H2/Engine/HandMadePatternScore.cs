@@ -16,7 +16,7 @@ namespace Huww98.FiveInARow.Engine
         public const int
             WinScore          = 100000,
             FourScore         = 1000,
-            BlockedFourScore  = 300,
+            BlockedFourScore  = 350,
             ThreeScore        = 400,
             BlockedThreeScore = 50,
             TwoScore          = 10,

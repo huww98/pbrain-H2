@@ -16,8 +16,11 @@ namespace Huww98.FiveInARow
         {
             var engine = new AlphaBetaEngine();
             //engine.TraceSource.Listeners.Clear();
-            //engine.TraceSource.Listeners.Add(new TextWriterTraceListener(new StreamWriter(@"C:\Users\huww\Documents\engine.log", false)));
-            //engine.TraceSource.Switch.Level = SourceLevels.All;
+            //engine.TraceSource.Listeners.Add(new TextWriterTraceListener(new StreamWriter(@"C:\Users\huww\Documents\engine.log", false))
+            //{
+            //    TraceOutputOptions = TraceOptions.DateTime
+            //});
+            //engine.TraceSource.Switch.Level = SourceLevels.Information;
 
             var pbrain = new PbrainAdapter(engine)
             {

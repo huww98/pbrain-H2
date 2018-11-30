@@ -21,6 +21,7 @@ namespace Huww98.FiveInARow.Engine
         public static implicit operator Direction(int v) => new Direction(v);
 
         public const int TotalDirection = 8;
+        public const int MainDirectionCount = TotalDirection / 2;
 
         public static int Opposite(int d) => (d + 4) % 8;
 
@@ -129,7 +130,7 @@ namespace Huww98.FiveInARow.Engine
             public bool PlaceChessPiece(int i)
             {
                 bool win = false;
-                for (int d = 0; d < Direction.TotalDirection / 2; d++)
+                for (int d = 0; d < Direction.MainDirectionCount; d++)
                 {
                     var adjacentCount = AdjacentCount(i, d, out var od);
 

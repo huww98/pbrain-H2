@@ -101,11 +101,11 @@ namespace Huww98.FiveInARow.Engine
         public bool IsEmpty((int x, int y) position)
             => IsEmpty(FlattenedIndex(position));
 
-        public void PlaceChessPiece(int i, Player p)
+        public void PlaceChessPiece(int i, Player p, bool skipForbiddenCheck = false)
         {
             Debug.Assert(Winner == Player.Empty);
 
-            bool forbiddenMove = IsForbidden(i, p);
+            bool forbiddenMove = !skipForbiddenCheck && IsForbidden(i, p);
 
             PlaceChessPieceUnchecked(i, p);
             this.Winner = forbiddenMove ? p.OppositePlayer() : adjacentInfoTable.Winner;
@@ -169,7 +169,7 @@ namespace Huww98.FiveInARow.Engine
 
             var atable = adjacentInfoTable[p];
 
-            for (int d = 0; d < Direction.TotalDirection / 2; d++) // 若此步能赢则不为禁手
+            for (int d = 0; d < Direction.MainDirectionCount; d++) // 若此步能赢则不为禁手
             {
                 var adjacentCount = atable.AdjacentCount(i, d, out _);
                 if (adjacentCount == 5)
@@ -182,7 +182,7 @@ namespace Huww98.FiveInARow.Engine
             int threeCount = 0;
             var threeKeyPoints = new List<int[]>(); // 使活三成为活四的关键点
 
-            for (int d = 0; d < Direction.TotalDirection / 2; d++)
+            for (int d = 0; d < Direction.MainDirectionCount; d++)
             {
                 var adjacentCount = atable.AdjacentCount(i, d, out var od);
 
@@ -261,7 +261,7 @@ namespace Huww98.FiveInARow.Engine
         public string StringBoard(int? nextPositionIndex = null)
         {
             string[] lines = new string[Height + 1];
-            lines[0] = string.Join(' ', Enumerable.Repeat(' ', 1).Concat(Enumerable.Range(0, Width).Select(i => i.ToString().Last())));
+            lines[0] = string.Join(" ", Enumerable.Repeat(' ', 1).Concat(Enumerable.Range(0, Width).Select(i => i.ToString().Last())));
             for (int i = 0; i < Height; i++)
             {
                 string[] pieces = new string[Width + 1];
@@ -286,12 +286,12 @@ namespace Huww98.FiveInARow.Engine
                     }
                     if (index == nextPositionIndex)
                     {
-                        pieces[index] = "*";
+                        pieces[j + 1] = "*";
                     }
                 }
-                lines[i + 1] = string.Join(' ', pieces);
+                lines[i + 1] = string.Join(" ", pieces);
             }
-            return string.Join('\n', lines);
+            return string.Join("\n", lines);
         }
     }
 

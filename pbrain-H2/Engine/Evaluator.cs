@@ -35,7 +35,7 @@ namespace Huww98.FiveInARow.Engine
                 if (!p.IsTruePlayer())
                     continue;
 
-                for (int d = 0; d < Direction.TotalDirection / 2; d++)
+                for (int d = 0; d < Direction.MainDirectionCount; d++)
                 {
                     Pattern before = patternExtractor[i, Direction.Opposite(d)];
                     Pattern after = patternExtractor[i, d];
@@ -47,7 +47,7 @@ namespace Huww98.FiveInARow.Engine
 
         private void Board_ChessTakenBack(object sender, BoardChangedEventArgs e)
         {
-            for (int d = 0; d < Direction.TotalDirection / 2; d++)
+            for (int d = 0; d < Direction.MainDirectionCount; d++)
             {
                 ownScoreCalc.Update(e.Index, d, 0);
             }
@@ -72,7 +72,7 @@ namespace Huww98.FiveInARow.Engine
 
         private void Board_ChessPlaced(object sender, BoardChangedEventArgs e)
         {
-            for (int d = 0; d < Direction.TotalDirection / 2; d++)
+            for (int d = 0; d < Direction.MainDirectionCount; d++)
             {
                 var od = Direction.Opposite(d);
                 var before = patternExtractor.Update(e.Index, od);
@@ -168,12 +168,12 @@ namespace Huww98.FiveInARow.Engine
 
         public CachedScoreCalculator(int boardSize)
         {
-            this.scoreCache = new int[boardSize, Direction.TotalDirection / 2];
+            this.scoreCache = new int[boardSize, Direction.MainDirectionCount];
         }
 
         public void Update(int i, Direction d, int newScore)
         {
-            Debug.Assert(d < Direction.TotalDirection / 2);
+            Debug.Assert(d < Direction.MainDirectionCount);
 
             var oldScore = scoreCache[i, d];
             CurrentScore -= oldScore;

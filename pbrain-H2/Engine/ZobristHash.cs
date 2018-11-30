@@ -20,7 +20,7 @@ namespace Huww98.FiveInARow.Engine
                 {
                     var buffer = new byte[8];
                     random.NextBytes(buffer);
-                    randomTable[i, j] = BitConverter.ToInt64(buffer);
+                    randomTable[i, j] = BitConverter.ToInt64(buffer, 0);
                 }
             }
         }
