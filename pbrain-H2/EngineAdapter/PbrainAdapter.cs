@@ -45,16 +45,16 @@ namespace Huww98.FiveInARow.EngineAdapter
                     case "START":
                         var size = int.Parse(command[1]);
                         controller.StartGame(size, size);
-                        await writer.OK();
+                        await OK();
                         break;
                     case "RECTSTART":
                         var sizes = command[1].Split(',').Select(s => int.Parse(s)).ToList();
                         controller.StartGame(sizes[0], sizes[1]);
-                        await writer.OK();
+                        await OK();
                         break;
                     case "RESTART":
                         controller.NewBoard(Enumerable.Empty<Move>());
-                        await writer.OK();
+                        await OK();
                         break;
                     case "BEGIN":
                         controller.BeginTurn();
@@ -133,7 +133,7 @@ namespace Huww98.FiveInARow.EngineAdapter
                     controller.HasForbiddenCheck = value == "1";
                     break;
                 default:
-                    writer.Message($"unknown INFO {key}");
+                    Message($"unknown INFO {key}");
                     break;
             }
         }
@@ -158,6 +158,30 @@ namespace Huww98.FiveInARow.EngineAdapter
             }
             controller.NewBoard(moves);
         }
+
+        public Task OK()
+            => writer.WriteLineAndFlush("OK");
+
+        private async Task Log(string type, string message)
+        {
+            using (StringReader sr = new StringReader(message))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    await writer.WriteLineAndFlush($"{type} {line}");
+                }
+            }
+        }
+
+        public Task Error(string message)
+            => Log("ERROR", message);
+
+        public Task Message(string message)
+            => Log("MESSAGE", message);
+
+        public Task Debug(string message)
+            => Log("DEBUG", message);
     }
 
     struct About
@@ -186,11 +210,5 @@ namespace Huww98.FiveInARow.EngineAdapter
             await writer.WriteLineAsync(value);
             await writer.FlushAsync();
         }
-
-        public static Task OK(this TextWriter writer)
-            => writer.WriteLineAndFlush("OK");
-
-        public static Task Message(this TextWriter writer, string message)
-            => writer.WriteLineAndFlush($"MESSAGE {message}");
     }
 }

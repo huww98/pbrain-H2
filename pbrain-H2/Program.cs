@@ -15,12 +15,12 @@ namespace Huww98.FiveInARow
         static async Task Main(string[] args)
         {
             var engine = new AlphaBetaEngine();
-            //engine.TraceSource.Listeners.Clear();
+            engine.TraceSource.Listeners.Clear();
             //engine.TraceSource.Listeners.Add(new TextWriterTraceListener(new StreamWriter(@"C:\Users\huww\Documents\engine.log", false))
             //{
             //    TraceOutputOptions = TraceOptions.DateTime
             //});
-            //engine.TraceSource.Switch.Level = SourceLevels.Information;
+            engine.TraceSource.Switch.Level = SourceLevels.Information;
 
             var pbrain = new PbrainAdapter(engine)
             {
@@ -33,6 +33,8 @@ namespace Huww98.FiveInARow
                     Email = "huww98@outlook.com"
                 }
             };
+            engine.TraceSource.Listeners.Add(new PbrainTraceListener(pbrain));
+
             await pbrain.StartAsync();
         }
     }
