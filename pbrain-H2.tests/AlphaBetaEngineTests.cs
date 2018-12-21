@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Huww98.FiveInARow.Engine.Tests
+namespace Huww98.FiveInARow.Engine.AlphaBeta.Tests
 {
     public class AlphaBetaEngineTests
     {
@@ -17,7 +17,7 @@ namespace Huww98.FiveInARow.Engine.Tests
             var board = new Player[10, 10];
             board[2, 2] = board[3, 2] = board[5, 2] = Player.Own;
             engine.SetBoard(board);
-            engine.HasTimeLimit = false;
+            engine.HasNoTimeLimit();
             var score = engine.AlphaBetaSearch(4);
 
             Assert.Equal(Evaluator.MaxScore, score);
@@ -30,7 +30,7 @@ namespace Huww98.FiveInARow.Engine.Tests
             var board = new Player[10, 10];
             board[2, 2] = board[3, 2] = board[4, 2] = board[5, 2] = Player.Opponent;
             engine.SetBoard(board);
-            engine.HasTimeLimit = false;
+            engine.HasNoTimeLimit();
             var score = engine.AlphaBetaSearch(3);
 
             Assert.Equal(-Evaluator.MaxScore, score);
@@ -50,7 +50,7 @@ namespace Huww98.FiveInARow.Engine.Tests
             board[9, 10] = board[9, 9] = board[9, 8] = board[9, 7]
                 = board[10, 8] = board[13, 8] = board[13, 11] = board[8, 11] = Player.Opponent;
             engine.SetBoard(board);
-            engine.HasTimeLimit = false;
+            engine.HasNoTimeLimit();
             engine.HasForbiddenPlayer = Player.Own;
             for (int i = 1; i <= 5; i++)
             {
@@ -74,7 +74,7 @@ namespace Huww98.FiveInARow.Engine.Tests
             var board = new Player[10, 10];
             board[2, 2] = board[3, 2] = board[5, 2] = Player.Own;
             engine.SetBoard(board);
-            engine.HasTimeLimit = false;
+            engine.HasNoTimeLimit();
             var score = engine.AlphaBetaSearch(2);
 
             Assert.Equal(100, score);

@@ -23,10 +23,9 @@ namespace Huww98.FiveInARow.Engine
         }
     }
 
-    interface IEngine
+    public interface IEngine
     {
-        TimeSpan TurnTimeout { set; }
-        TimeSpan MatchTimeout { set; }
+        DateTime ScheduredEndTime { set; }
 
         bool ExactFive { set; }
         Player HasForbiddenPlayer { set; }
@@ -35,4 +34,13 @@ namespace Huww98.FiveInARow.Engine
         Task<(int x, int y)> Think();
         void OpponentMove((int x, int y) position);
     }
+
+    public static class EngineExtension
+    {
+        public static void HasNoTimeLimit(this IEngine engine)
+        {
+            engine.ScheduredEndTime = DateTime.MaxValue;
+        }
+    }
+
 }

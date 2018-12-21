@@ -1,4 +1,5 @@
 ﻿using Huww98.FiveInARow.Engine;
+using Huww98.FiveInARow.TimeoutPolicy;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +15,14 @@ namespace Huww98.FiveInARow.EngineAdapter
     class EngineControl
     {
         public IEngine Engine { get; }
+        public ITimeoutPolicy TimeoutPolicy { get; }
+
+        (int x, int y) boardSize;
+        private TimeSpan _matchTimeout;
+        private TimeSpan _turnTimeout;
         bool _hasForbiddenCheck = false;
+        Player _firstPlayer = Player.Empty;
+
         public bool HasForbiddenCheck
         {
             set
@@ -24,7 +32,7 @@ namespace Huww98.FiveInARow.EngineAdapter
             }
             get => _hasForbiddenCheck;
         }
-        Player _firstPlayer = Player.Empty;
+
         Player FirstPlayer
         {
             set
@@ -35,16 +43,44 @@ namespace Huww98.FiveInARow.EngineAdapter
             get => _firstPlayer;
         }
 
+        public TimeSpan MatchTimeout
+        {
+            get => _matchTimeout;
+            set
+            {
+                _matchTimeout = value;
+                SyncTimeout();
+            }
+        }
+
+        public TimeSpan TurnTimeout
+        {
+            get => _turnTimeout;
+            set
+            {
+                _turnTimeout = value;
+                SyncTimeout();
+            }
+        }
+
+        public bool ExactFive { set => Engine.ExactFive = value; }
+
         private void SyncHasForbiddenPlayer()
         {
             Engine.HasForbiddenPlayer = HasForbiddenCheck ? FirstPlayer : Player.Empty;
         }
 
-        (int x, int y) boardSize;
+        private bool warmingUp = true;
 
-        public EngineControl(IEngine engine)
+        private void SyncTimeout()
+        {
+            Engine.ScheduredEndTime = DateTime.Now + TimeoutPolicy.GetTimeout(TurnTimeout, MatchTimeout, warmingUp);
+        }
+
+        public EngineControl(IEngine engine, ITimeoutPolicy timeoutPolicy)
         {
             Engine = engine;
+            TimeoutPolicy = timeoutPolicy;
         }
 
         public void StartGame(int x, int y)
@@ -70,6 +106,7 @@ namespace Huww98.FiveInARow.EngineAdapter
             }
             var (x, y) = await Engine.Think();
             MoveMade?.Invoke(this, new MoveMadeEventArgs { X = x, Y = y });
+            this.warmingUp = false;
         }
 
         public void NewBoard(IEnumerable<Move> moves)

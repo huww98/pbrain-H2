@@ -11,20 +11,18 @@ namespace Huww98.FiveInARow.EngineAdapter
     class PbrainAdapter
     {
         EngineControl controller;
-        private readonly IEngine engine;
         private readonly TextReader reader;
         private readonly TextWriter writer;
 
-        public PbrainAdapter(IEngine engine, TextReader reader, TextWriter writer)
+        public PbrainAdapter(EngineControl controller, TextReader reader, TextWriter writer)
         {
-            this.engine = engine;
             this.reader = reader;
             this.writer = writer;
-            controller = new EngineControl(engine);
+            this.controller = controller;
         }
 
-        public PbrainAdapter(IEngine engine)
-            : this(engine, Console.In, Console.Out)
+        public PbrainAdapter(EngineControl controller)
+            : this(controller, Console.In, Console.Out)
         { }
 
         public About About { get; set; }
@@ -105,23 +103,23 @@ namespace Huww98.FiveInARow.EngineAdapter
             switch (key)
             {
                 case "timeout_turn":
-                    engine.TurnTimeout = TimeSpan.FromMilliseconds(int.Parse(value));
+                    controller.TurnTimeout = TimeSpan.FromMilliseconds(int.Parse(value));
                     break;
                 case "timeout_match":
                     {
                         int v = int.Parse(value);
-                        engine.MatchTimeout = v == 0 ? TimeSpan.MaxValue : TimeSpan.FromMilliseconds(v);
+                        controller.MatchTimeout = v == 0 ? TimeSpan.MaxValue : TimeSpan.FromMilliseconds(v);
                         break;
                     }
                 case "time_left":
-                    engine.MatchTimeout = TimeSpan.FromMilliseconds(int.Parse(value));
+                    controller.MatchTimeout = TimeSpan.FromMilliseconds(int.Parse(value));
                     break;
                 case "rule":
                     {
                         var v = int.Parse(value);
                         if ((v & 1) == 1)
                         {
-                            engine.ExactFive = true;
+                            controller.ExactFive = true;
                         }
                         if ((v & 4) == 4)
                         {

@@ -1,5 +1,6 @@
-﻿using Huww98.FiveInARow.Engine;
+﻿using Huww98.FiveInARow.Engine.AlphaBeta;
 using Huww98.FiveInARow.EngineAdapter;
+using Huww98.FiveInARow.TimeoutPolicy;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -22,7 +23,16 @@ namespace Huww98.FiveInARow
             //});
             engine.TraceSource.Switch.Level = SourceLevels.Information;
 
-            var pbrain = new PbrainAdapter(engine)
+            var pbrain = new PbrainAdapter(
+                new EngineControl(
+                    engine,
+                    new AbsoluteTimeLimit
+                    {
+                        ReservedTime = TimeSpan.FromSeconds(0.2),
+                        WarmingUpReservedTime = TimeSpan.FromSeconds(0.7)
+                    }
+                )
+            )
             {
                 About = new About
                 {

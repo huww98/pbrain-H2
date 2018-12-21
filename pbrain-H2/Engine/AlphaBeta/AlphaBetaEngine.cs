@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Huww98.FiveInARow.Engine
+namespace Huww98.FiveInARow.Engine.AlphaBeta
 {
     public class AlphaBetaEngine : IEngine
     {
@@ -14,7 +14,6 @@ namespace Huww98.FiveInARow.Engine
         public TimeSpan MatchTimeout { get; set; }
         public bool ExactFive { set => Board.ExactFive = value; }
         public Player HasForbiddenPlayer { set => Board.HasForbiddenPlayer = value; }
-        public bool HasTimeLimit { get; set; } = true;
 
         public Board Board { get; private set; }
         public Evaluator Evaluator { get; private set; }
@@ -23,9 +22,7 @@ namespace Huww98.FiveInARow.Engine
         Dictionary<long, SearchTreeNode> transpositionTable = new Dictionary<long, SearchTreeNode>();
         KillerTable killerTable = new KillerTable();
 
-        DateTime thinkStartTime;
-        // TODO: Update time limit when thinking.
-        DateTime scheduredEndTime;
+        public DateTime ScheduredEndTime { get; set; }
         private readonly PatternTable patternTable;
 
         public AlphaBetaEngine(PatternTable patternTable = null)
@@ -89,7 +86,7 @@ namespace Huww98.FiveInARow.Engine
 
         private bool TimeLimitExceeded()
         {
-            return HasTimeLimit && DateTime.Now > scheduredEndTime;
+            return DateTime.Now > ScheduredEndTime;
         }
 
         private int Ply(int layer) => maxLayer - layer;
@@ -293,12 +290,6 @@ namespace Huww98.FiveInARow.Engine
 
         public async Task<(int, int)> Think()
         {
-            scheduredEndTime = DateTime.Now + TurnTimeout;
-            if (isFirstThink)
-            {
-                scheduredEndTime -= TimeSpan.FromSeconds(1.0);
-                isFirstThink = false; // First think is slow, we reverse some time.
-            }
             int i = await Task.Run(() => DoSearch());
             SelfMove(i);
             return Board.UnflattenedIndex(i);
