@@ -182,7 +182,7 @@ namespace Huww98.FiveInARow.EngineAdapter
             => Log("DEBUG", message);
     }
 
-    struct About
+    class About
     {
         public string Name { get; set; }
         public string Version { get; set; }

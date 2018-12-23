@@ -36,13 +36,13 @@ namespace Huww98.FiveInARow.Engine
 
     public class ZobristHash
     {
-        private readonly ZobristRandom randomTable;
+        public ZobristRandom RandomTable { get; }
 
         public long Hash { get; private set; } = 0;
 
         public ZobristHash(Player[] board, ZobristRandom random = null)
         {
-            this.randomTable = random ?? new ZobristRandom(board.Length);
+            this.RandomTable = random ?? new ZobristRandom(board.Length);
 
             for (int i = 0; i < board.Length; i++)
             {
@@ -53,6 +53,12 @@ namespace Huww98.FiveInARow.Engine
             }
         }
 
+        public ZobristHash(ZobristHash anotherHash)
+        {
+            this.RandomTable = anotherHash.RandomTable;
+            this.Hash = anotherHash.Hash;
+        }
+
         public void Set(int i, Player p)
         {
             Hash = NextHash(i, p);
@@ -60,7 +66,7 @@ namespace Huww98.FiveInARow.Engine
 
         public long NextHash(int i, Player p)
         {
-            return Hash ^ randomTable[p, i];
+            return Hash ^ RandomTable[p, i];
         }
     }
 }

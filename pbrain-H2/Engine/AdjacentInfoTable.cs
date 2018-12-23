@@ -76,6 +76,14 @@ namespace Huww98.FiveInARow.Engine
             this.offset = offset;
         }
 
+        public AdjacentInfoTable(AdjacentInfoTable another)
+        {
+            Own = new PlayerAdjacentInfoTable(this, another.Own);
+            Opponent = new PlayerAdjacentInfoTable(this, another.Opponent);
+            this.offset = another.offset;
+            this.ExactFive = another.ExactFive;
+        }
+
         public AdjacentInfoTable(Player[] board, DirectionOffset offset) : this(board.Length, offset)
         {
             for (int i = 0; i < board.Length; i++)
@@ -124,6 +132,13 @@ namespace Huww98.FiveInARow.Engine
             {
                 this.parent = parent;
                 Data = new byte[size, Direction.TotalDirection];
+            }
+
+            public PlayerAdjacentInfoTable(AdjacentInfoTable parent, PlayerAdjacentInfoTable another)
+            {
+                this.parent = parent;
+                Data = new byte[another.Data.GetLength(0), Direction.TotalDirection];
+                Array.Copy(another.Data, this.Data, another.Data.Length);
             }
 
             /// <returns>whether the player is the winner</returns>

@@ -24,6 +24,7 @@ namespace Huww98.FiveInARow.Engine
         public Player this[int i] => board[i];
         public int FlattenedSize => this.board.Length;
         public Player Winner { get; private set; } = Player.Empty;
+        public bool IsGameOver => Winner != Player.Empty;
 
         public event EventHandler<BoardChangedEventArgs> ChessPlaced;
         public event EventHandler<BoardChangedEventArgs> ChessTakenBack;
@@ -40,6 +41,23 @@ namespace Huww98.FiveInARow.Engine
             DirectionOffset = new DirectionOffset(extendedWidth);
             adjacentInfoTable = new AdjacentInfoTable(this.board, DirectionOffset);
             ZobristHash = new ZobristHash(this.board);
+        }
+
+        public Board(Board anotherBoard)
+        {
+            Width = anotherBoard.Width;
+            Height = anotherBoard.Height;
+            extendedWidth = Width + 2;
+
+            this.board = new Player[anotherBoard.board.Length];
+            anotherBoard.board.CopyTo(this.board, 0);
+
+            EmptyMask = new BitArray(anotherBoard.EmptyMask);
+            DirectionOffset = anotherBoard.DirectionOffset;
+            adjacentInfoTable = new AdjacentInfoTable(anotherBoard.adjacentInfoTable);
+            ZobristHash = new ZobristHash(anotherBoard.ZobristHash);
+
+            this.HasForbiddenPlayer = anotherBoard.HasForbiddenPlayer;
         }
 
         public IEnumerable<(int x, int y)> AllPosition()
@@ -101,9 +119,12 @@ namespace Huww98.FiveInARow.Engine
         public bool IsEmpty((int x, int y) position)
             => IsEmpty(FlattenedIndex(position));
 
+        public bool IsValid(int i, Player p)
+            => IsEmpty(i) && !IsForbidden(i, p);
+
         public void PlaceChessPiece(int i, Player p, bool skipForbiddenCheck = false)
         {
-            Debug.Assert(Winner == Player.Empty);
+            Debug.Assert(!IsGameOver);
 
             bool forbiddenMove = !skipForbiddenCheck && IsForbidden(i, p);
 
@@ -160,7 +181,7 @@ namespace Huww98.FiveInARow.Engine
             TakeBack(i);
         }
 
-        private bool IsForbidden(int i, Player p)
+        public bool IsForbidden(int i, Player p)
         {
             if (p != HasForbiddenPlayer)
             {

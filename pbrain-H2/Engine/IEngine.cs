@@ -30,9 +30,13 @@ namespace Huww98.FiveInARow.Engine
         bool ExactFive { set; }
         Player HasForbiddenPlayer { set; }
 
-        void SetBoard(Player[,] board);
         Task<(int x, int y)> Think();
         void OpponentMove((int x, int y) position);
+    }
+
+    public interface IEngineFactory
+    {
+        IEngine CreateEngine(Player[,] board);
     }
 
     public static class EngineExtension

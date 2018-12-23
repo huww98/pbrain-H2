@@ -30,6 +30,16 @@ namespace Huww98.FiveInARow.Engine
             }
         }
 
+        public MoveGenerator(Board board, MoveGenerator another)
+        {
+            this.board = board;
+            board.ChessPlaced += (s, e) => OnChessPiecePlaced(e.Index);
+            board.ChessTakenBack += (s, e) => avaliablePositionHistory.Pop();
+            this.newAvaliablePositionMasks = another.newAvaliablePositionMasks;
+            this.empty = another.empty;
+            this.avaliablePositionHistory.Push(another.AvaliablePositionMask );
+        }
+
         private List<BitArray> PrecalculateNewAvaliablePositionMasks(Board board, int range)
         {
             var masks = new List<BitArray>(Enumerable.Repeat<BitArray>(null, board.EmptyMask.Count));

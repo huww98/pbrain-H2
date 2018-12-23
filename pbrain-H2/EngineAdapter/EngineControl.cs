@@ -14,7 +14,8 @@ namespace Huww98.FiveInARow.EngineAdapter
 
     class EngineControl
     {
-        public IEngine Engine { get; }
+        public IEngine Engine { get; private set; }
+        public IEngineFactory EngineFactory { get; }
         public ITimeoutPolicy TimeoutPolicy { get; }
 
         (int x, int y) boardSize;
@@ -63,7 +64,21 @@ namespace Huww98.FiveInARow.EngineAdapter
             }
         }
 
-        public bool ExactFive { set => Engine.ExactFive = value; }
+        private bool _exactFive;
+        public bool ExactFive
+        {
+            get => _exactFive;
+            set
+            {
+                _exactFive = value;
+                SyncExactFive();
+            }
+        }
+
+        private void SyncExactFive()
+        {
+            Engine.ExactFive = ExactFive;
+        }
 
         private void SyncHasForbiddenPlayer()
         {
@@ -77,9 +92,9 @@ namespace Huww98.FiveInARow.EngineAdapter
             Engine.ScheduredEndTime = DateTime.Now + TimeoutPolicy.GetTimeout(TurnTimeout, MatchTimeout, warmingUp);
         }
 
-        public EngineControl(IEngine engine, ITimeoutPolicy timeoutPolicy)
+        public EngineControl(IEngineFactory engineFactory, ITimeoutPolicy timeoutPolicy)
         {
-            Engine = engine;
+            EngineFactory = engineFactory;
             TimeoutPolicy = timeoutPolicy;
         }
 
@@ -117,7 +132,10 @@ namespace Huww98.FiveInARow.EngineAdapter
             {
                 newBoard[m.X, m.Y] = m.Player;
             }
-            Engine.SetBoard(newBoard);
+            Engine = EngineFactory.CreateEngine(newBoard);
+            SyncHasForbiddenPlayer();
+            SyncTimeout();
+            SyncExactFive();
 
             var firstMove = moves.Where(m => m.Player == Player.Own || m.Player == Player.Opponent)
                                  .Cast<Move?>()

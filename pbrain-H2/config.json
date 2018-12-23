@@ -1,0 +1,10 @@
+{
+  "Engine": "MonteCarlo",
+  "Logging": {
+    "PBrain": {
+      "LogLevel": {
+        "Default": "Information"
+      }
+    }
+  }
+}

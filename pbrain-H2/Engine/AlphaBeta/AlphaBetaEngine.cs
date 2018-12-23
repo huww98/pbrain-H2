@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -8,12 +10,12 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
 {
     public class AlphaBetaEngine : IEngine
     {
-        public TraceSource TraceSource { get; private set; }
-
         public TimeSpan TurnTimeout { get; set; }
         public TimeSpan MatchTimeout { get; set; }
         public bool ExactFive { set => Board.ExactFive = value; }
         public Player HasForbiddenPlayer { set => Board.HasForbiddenPlayer = value; }
+
+        private readonly ILogger<AlphaBetaEngine> logger;
 
         public Board Board { get; private set; }
         public Evaluator Evaluator { get; private set; }
@@ -25,7 +27,7 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
         public DateTime ScheduredEndTime { get; set; }
         private readonly PatternTable patternTable;
 
-        public AlphaBetaEngine(PatternTable patternTable = null)
+        public AlphaBetaEngine(Board board, PatternTable patternTable = null, ILogger<AlphaBetaEngine> logger = null)
         {
             if(patternTable == null)
             {
@@ -36,13 +38,13 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
             {
                 this.patternTable = patternTable;
             }
-            TraceSource = new TraceSource("AlphaBetaEngine")
-            {
-                Switch = new SourceSwitch("AlphaBetaEngineSwitch")
-                {
-                    Level = SourceLevels.Warning
-                }
-            };
+
+            this.logger = logger ?? new NullLogger<AlphaBetaEngine>();
+
+            this.Board = board;
+            this.Evaluator = new Evaluator(this.Board, this.patternTable);
+            this.moveGenerator = new MoveGenerator(this.Board);
+            rootNode = new SearchTreeNode();
         }
 
         private void UpdateRootNode(int i)
@@ -76,14 +78,6 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
             UpdateRootNode(i);
         }
 
-        public void SetBoard(Player[,] board)
-        {
-            this.Board = new Board(board);
-            this.Evaluator = new Evaluator(this.Board, this.patternTable);
-            this.moveGenerator = new MoveGenerator(this.Board);
-            rootNode = new SearchTreeNode();
-        }
-
         private bool TimeLimitExceeded()
         {
             return DateTime.Now > ScheduredEndTime;
@@ -99,28 +93,26 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
             int maxLayer = 2; // We need to search at least 2 layer to trigger the generation of child nodes.
             while (true)
             {
-                TraceSource.TraceInformation($"Searching, max layer {maxLayer}.");
+                logger.LogInformation("Searching, max layer {0}.", maxLayer);
                 AlphaBetaSearch(maxLayer);
-                TraceSource.TraceInformation($"Search complete, max layer {maxLayer}, reached leaf: {leafReached}.");
+                logger.LogInformation($"Search complete, max layer {maxLayer}, reached leaf: {leafReached}.");
 
                 if (rootNode.GameOver)
                 {
-                    TraceSource.TraceInformation($"Game over, {(rootNode.LastScore.Exact > 0 ? "I" : "Opponent")} Win");
+                    logger.LogInformation($"Game over, {(rootNode.LastScore.Exact > 0 ? "I" : "Opponent")} Win");
                     break;
                 }
                 if (TimeLimitExceeded())
                 {
-                    TraceSource.TraceInformation("Timeout, breaking.");
+                    logger.LogInformation("Timeout, breaking.");
                     break;
                 }
-                TraceSource.Flush();
                 maxLayer++;
             }
             rootNode.SortChildren();
             var nextIndex = rootNode.Children[0].i;
-            TraceSource.TraceInformation($"Next position to go {Board.UnflattenedIndex(nextIndex)}.");
-            TraceSource.TraceInformation("\n" + Board.StringBoard(nextIndex));
-            TraceSource.Flush();
+            logger.LogInformation($"Next position to go {Board.UnflattenedIndex(nextIndex)}.");
+            logger.LogInformation("\n" + Board.StringBoard(nextIndex));
             this.transpositionTable = null; // save memory
             return nextIndex;
         }
@@ -138,7 +130,7 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
         [Conditional("DEBUG")]
         void Trace(int id, string message)
         {
-            TraceSource.TraceEvent(TraceEventType.Verbose, id, $"{Board.ZobristHash.Hash:X16} {message}");
+            logger.LogTrace(id, $"{Board.ZobristHash.Hash:X16} {message}");
         }
 
         enum MoveOrigin
@@ -237,7 +229,7 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
             // No score reuse, begin evaluate this node.
             var nextScore = layer == node.LastSearchLayer ? node.LastScore : ScoreCache.Initial;
 
-            if (Board.Winner != Player.Empty || layer == 1)
+            if (Board.IsGameOver || layer == 1)
             {
                 nextScore.Exact = Evaluator.Evaluate(player);
                 Trace(7, $"Leaf: {nextScore}");
@@ -286,85 +278,11 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
             return currentScore;
         }
 
-        private static bool isFirstThink = true;
-
         public async Task<(int, int)> Think()
         {
             int i = await Task.Run(() => DoSearch());
             SelfMove(i);
             return Board.UnflattenedIndex(i);
-        }
-    }
-
-    /// <summary>
-    /// This class should be as simple as possible, since there will be so many instances.
-    /// </summary>
-    public class SearchTreeNode
-    {
-        public List<(int i, SearchTreeNode node)> Children;
-        public ScoreCache LastScore { get; private set; } = ScoreCache.Initial;
-        public byte LastSearchLayer { get; private set; } = 0;
-        public bool FullChildrenGenerated = false;
-
-        public void NewScore (int layer, ScoreCache score)
-        {
-            Debug.Assert(layer <= byte.MaxValue);
-            LastSearchLayer = (byte)layer;
-            LastScore = score;
-        }
-
-        public bool GameOver
-            => LastScore.LowerBound == Evaluator.MaxScore || LastScore.UpperBound == -Evaluator.MaxScore;
-
-        public void SortChildren ()
-        {
-            Children.Sort((a, b) => a.node.LastScore.UpperBound - b.node.LastScore.UpperBound);
-        }
-    }
-
-    public struct ScoreCache
-    {
-        public static ScoreCache Initial = new ScoreCache { LowerBound = -Evaluator.MaxScore, UpperBound = Evaluator.MaxScore };
-
-        public int LowerBound;
-        public int UpperBound;
-
-        public int Exact
-        {
-            get
-            {
-                Debug.Assert(IsExact);
-                return LowerBound;
-            }
-            set => LowerBound = UpperBound = value;
-        }
-
-        public bool IsExact => LowerBound == UpperBound;
-
-        public override string ToString()
-        {
-            return $"({LowerBound}, {UpperBound})";
-        }
-
-        public bool TryReuse(int alpha, int beta, out int reusedScore)
-        {
-            if (IsExact)
-            {
-                reusedScore = Exact;
-                return true;
-            }
-            if (UpperBound <= alpha)
-            {
-                reusedScore = alpha;
-                return true;
-            }
-            if (LowerBound >= beta)
-            {
-                reusedScore = beta;
-                return true;
-            }
-            reusedScore = default;
-            return false;
         }
     }
 }
