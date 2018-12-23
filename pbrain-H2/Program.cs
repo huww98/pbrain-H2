@@ -35,6 +35,7 @@ namespace Huww98.FiveInARow
                 {
                     builder
                         .AddConfiguration(config.GetSection("Logging"))
+                        //.AddFile(@"C:\Users\huww\Documents\enginelog.txt", minimumLevel: LogLevel.Trace)
                         .AddPbrain();
                 })
                 .AddSingleton<ITimeoutPolicy>(new AbsoluteTimeLimit

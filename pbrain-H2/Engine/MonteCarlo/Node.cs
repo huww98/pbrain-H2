@@ -18,14 +18,14 @@ namespace Huww98.FiveInARow.Engine.MonteCarlo
             {
                 return double.PositiveInfinity;
             }
-            return (double)Score / PlayedTimes + Math.Sqrt(2 * Math.Log(totalPlayedTimes) / PlayedTimes);
+            return (double)-Score / PlayedTimes + Math.Sqrt(2 * Math.Log(totalPlayedTimes) / PlayedTimes);
         }
 
         public List<(int i, Node node)> Children;
 
-        public (int i, Node node) GetBestChild(int totalPlayedTimes)
+        public (int i, Node node) GetBestChild()
         {
-            return Children.MaxBy(c => c.node.GetUCB(totalPlayedTimes)).FirstOrDefault();
+            return Children.MaxBy(c => c.node.GetUCB(PlayedTimes)).FirstOrDefault();
         }
 
         public void Win()

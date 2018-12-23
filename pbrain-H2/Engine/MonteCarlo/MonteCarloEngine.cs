@@ -1,6 +1,9 @@
-﻿using MoreLinq;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using MoreLinq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -8,9 +11,12 @@ namespace Huww98.FiveInARow.Engine.MonteCarlo
 {
     public class MonteCarloEngine : IEngine
     {
-        public MonteCarloEngine(Board board)
+        private readonly ILogger<MonteCarloEngine> logger;
+
+        public MonteCarloEngine(Board board, ILogger<MonteCarloEngine> logger = null)
         {
             Board = board;
+            this.logger = logger ?? new NullLogger<MonteCarloEngine>();
             MoveGenerator = new ListMoveGenerator(board);
         }
 
@@ -24,12 +30,19 @@ namespace Huww98.FiveInARow.Engine.MonteCarlo
             set => Board.HasForbiddenPlayer = value;
         }
 
-        public Player Search(Board board, ListMoveGenerator moveGenerator, Node node, Player player, int totalPlayedTimes)
+        [Conditional("DEBUG")]
+        void Trace(int id, string template, params object[] args)
+        {
+            logger.LogTrace(id, template, args);
+        }
+
+        public Player Search(Board board, ListMoveGenerator moveGenerator, Node node, Player player)
         {
             Player result;
             if (board.IsGameOver)
             {
                 result = board.Winner;
+                Trace(1, "{Hash} search to game over.", board.ZobristHash.Hash);
             }
             else if (node.PlayedTimes < 1)
             {
@@ -44,9 +57,10 @@ namespace Huww98.FiveInARow.Engine.MonteCarlo
                         .Select(i => (i, new Node()))
                         .ToList();
                 }
-                var c = node.GetBestChild(totalPlayedTimes);
+                var c = node.GetBestChild();
+                Trace(11, "{Hash} next node {i}.", board.ZobristHash.Hash, c.i);
                 board.PlaceChessPiece(c.i, player, skipForbiddenCheck: true);
-                result = Search(board, moveGenerator, c.node, player.OppositePlayer(), node.PlayedTimes);
+                result = Search(board, moveGenerator, c.node, player.OppositePlayer());
             }
 
             if (result == player)
@@ -61,6 +75,8 @@ namespace Huww98.FiveInARow.Engine.MonteCarlo
             {
                 node.Tie();
             }
+            Trace(21, "result {Winner} win. PlayedTimes: {PlayedTimes}, Score: {Score}",
+                result, node.PlayedTimes, node.Score);
 
             return result;
         }
@@ -69,6 +85,7 @@ namespace Huww98.FiveInARow.Engine.MonteCarlo
 
         private Player PlayOut(Board board, ListMoveGenerator moveGenerator, Player player)
         {
+            Player result;
             while (true)
             {
                 IReadOnlyList<int> moves;
@@ -84,7 +101,8 @@ namespace Huww98.FiveInARow.Engine.MonteCarlo
 
                 if (moves.Count == 0)
                 {
-                    return Player.Empty;
+                    result = Player.Empty;
+                    break;
                 }
                 int randInt = rand.Next(moves.Count);
                 var nextPosition = moves[randInt];
@@ -92,10 +110,14 @@ namespace Huww98.FiveInARow.Engine.MonteCarlo
 
                 if (board.IsGameOver)
                 {
-                    return board.Winner;
+                    result = board.Winner;
+                    break;
                 }
                 player = player.OppositePlayer();
             }
+
+            Trace(21, "Play out complete, {Winner} win.", result);
+            return result;
         }
 
         Node root = new Node();
@@ -116,17 +138,20 @@ namespace Huww98.FiveInARow.Engine.MonteCarlo
         {
             return Task.Run(() =>
             {
+                logger.LogInformation("Begin think, existing play time: {PlayTimes}", root.PlayedTimes);
                 while (DateTime.Now < ScheduredEndTime)
                 {
-                    int totalPlayTimes = 0;
                     Board board = new Board(Board);
-                    Search(board, new ListMoveGenerator(board, MoveGenerator), root, Player.Own, totalPlayTimes);
-                    totalPlayTimes++;
+                    Search(board, new ListMoveGenerator(board, MoveGenerator), root, Player.Own);
                 }
                 var (i, node) = root.Children.MaxBy(c => c.node.PlayedTimes).First();
+                var nextMove = Board.UnflattenedIndex(i);
+                logger.LogInformation("Next move: {NextMove}, played {PlayTimes} times.\n{Board}",
+                    nextMove, root.PlayedTimes, Board.StringBoard(i));
                 this.root = node;
-                Console.WriteLine(node.PlayedTimes);
-                return Board.UnflattenedIndex(i);
+                GC.Collect();
+                Board.PlaceChessPiece(i, Player.Own);
+                return nextMove;
             });
         }
 
