@@ -5,12 +5,12 @@ using System.Linq;
 
 namespace Huww98.FiveInARow.TimeoutPolicy
 {
-    interface ITimeoutPolicy
+    public interface ITimeoutPolicy
     {
         TimeSpan GetTimeout(TimeSpan turnTimeout, TimeSpan matchTimeout, bool warmingUp);
     }
 
-    class Shortest : ITimeoutPolicy
+    public class Shortest : ITimeoutPolicy
     {
         public Shortest(params ITimeoutPolicy[] policies)
         {
@@ -25,7 +25,7 @@ namespace Huww98.FiveInARow.TimeoutPolicy
         }
     }
 
-    class AbsoluteTimeLimit : ITimeoutPolicy
+    public class AbsoluteTimeLimit : ITimeoutPolicy
     {
         public TimeSpan ReservedTime { get; set; } = TimeSpan.Zero;
         public TimeSpan WarmingUpReservedTime { get; set; } = TimeSpan.Zero;

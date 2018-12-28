@@ -4,28 +4,36 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Huww98.FiveInARow.Engine.MonteCarlo
+namespace Huww98.FiveInARow.Engine
 {
-    /// <summary>
-    /// Experimental. May take place old generator.
-    /// </summary>
     public class ListMoveGenerator
     {
-        public List<int> AvaliablePositions { get; }
-        private BitArray avaliablePositionMask;
+        private Stack<List<int>> avaliablePositionsHistory = new Stack<List<int>>();
+        public List<int> AvaliablePositions => avaliablePositionsHistory.Peek();
+
+        private Stack<BitArray> avaliablePositionMaskHistory = new Stack<BitArray>();
+        private BitArray avaliablePositionMask => avaliablePositionMaskHistory.Peek();
+
         private readonly List<int[]> newAvaliablePositions;
         private readonly Board board;
         private bool empty = true;
 
+        public bool SupportTakeBack { get; set; } = true;
+
+        private void RegisterEvents()
+        {
+            board.ChessPlaced += (s, e) => ChessPiecePlaced(e.Index);
+            board.ChessTakenBack += (s, e) => ChessPieceTakenBack();
+        }
+
         public ListMoveGenerator(Board board, int range = 1)
         {
             this.board = board;
-            board.ChessPlaced += (s, e) => NewChessPiece(e.Index);
-            board.ChessTakenBack += (s, e) => throw new NotSupportedException();
-            avaliablePositionMask = new BitArray(board.EmptyMask.Count);
+            RegisterEvents();
+            avaliablePositionMaskHistory.Push(new BitArray(board.EmptyMask.Count));
+            avaliablePositionsHistory.Push(new List<int>());
 
             this.newAvaliablePositions = PrecalculateNewAvaliablePositions(board, range);
-            this.AvaliablePositions = new List<int>();
             foreach (var p in board.AllPosition())
             {
                 var i = board.FlattenedIndex(p);
@@ -39,12 +47,13 @@ namespace Huww98.FiveInARow.Engine.MonteCarlo
         public ListMoveGenerator(Board board, ListMoveGenerator another)
         {
             this.board = board;
-            board.ChessPlaced += (s, e) => NewChessPiece(e.Index);
-            board.ChessTakenBack += (s, e) => throw new NotSupportedException();
-            this.avaliablePositionMask = new BitArray(another.avaliablePositionMask);
-            this.AvaliablePositions = new List<int>(another.AvaliablePositions);
+            RegisterEvents();
+
+            this.avaliablePositionMaskHistory.Push(new BitArray(another.avaliablePositionMask));
+            this.avaliablePositionsHistory.Push(new List<int>(another.AvaliablePositions));
             this.newAvaliablePositions = another.newAvaliablePositions;
             this.empty = another.empty;
+            this.SupportTakeBack = another.SupportTakeBack;
         }
 
         private List<int[]> PrecalculateNewAvaliablePositions(Board board, int range)
@@ -86,6 +95,26 @@ namespace Huww98.FiveInARow.Engine.MonteCarlo
                 return initList;
             }
             return AvaliablePositions;
+        }
+
+        private void ChessPiecePlaced(int i)
+        {
+            if (SupportTakeBack)
+            {
+                avaliablePositionsHistory.Push(new List<int>(AvaliablePositions));
+                avaliablePositionMaskHistory.Push(new BitArray(avaliablePositionMask));
+            }
+            NewChessPiece(i);
+        }
+
+        private void ChessPieceTakenBack()
+        {
+            if (!SupportTakeBack)
+            {
+                throw new NotSupportedException();
+            }
+            avaliablePositionsHistory.Pop();
+            avaliablePositionMaskHistory.Pop();
         }
 
         private void NewChessPiece(int i)

@@ -17,7 +17,10 @@ namespace Huww98.FiveInARow.Engine.MonteCarlo
         {
             Board = board;
             this.logger = logger ?? new NullLogger<MonteCarloEngine>();
-            MoveGenerator = new ListMoveGenerator(board);
+            MoveGenerator = new ListMoveGenerator(board)
+            {
+                SupportTakeBack = false
+            };
         }
 
         public Board Board { get; }

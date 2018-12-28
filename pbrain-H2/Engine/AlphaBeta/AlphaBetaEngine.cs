@@ -19,7 +19,7 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
 
         public Board Board { get; private set; }
         public Evaluator Evaluator { get; private set; }
-        MoveGenerator moveGenerator;
+        ListMoveGenerator moveGenerator;
         SearchTreeNode rootNode;
         Dictionary<long, SearchTreeNode> transpositionTable = new Dictionary<long, SearchTreeNode>();
         KillerTable killerTable = new KillerTable();
@@ -43,7 +43,7 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
 
             this.Board = board;
             this.Evaluator = new Evaluator(this.Board, this.patternTable);
-            this.moveGenerator = new MoveGenerator(this.Board);
+            this.moveGenerator = new ListMoveGenerator(this.Board);
             rootNode = new SearchTreeNode();
         }
 
@@ -95,7 +95,8 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
             {
                 logger.LogInformation("Searching, max layer {0}.", maxLayer);
                 AlphaBetaSearch(maxLayer);
-                logger.LogInformation($"Search complete, max layer {maxLayer}, reached leaf: {leafReached}.");
+                logger.LogInformation("Search complete, max layer {MaxLayer}, reached leaf: {LeafReached}, full move generated: {FullMoveGenerated}.",
+                    maxLayer, leafReached, fullMoveGenerated);
 
                 if (rootNode.GameOver)
                 {
@@ -111,18 +112,20 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
             }
             rootNode.SortChildren();
             var nextIndex = rootNode.Children[0].i;
-            logger.LogInformation($"Next position to go {Board.UnflattenedIndex(nextIndex)}.");
-            logger.LogInformation("\n" + Board.StringBoard(nextIndex));
+            logger.LogInformation("Next position to go {NextMove}.\n{Board}",
+                Board.UnflattenedIndex(nextIndex), Board.StringBoard(nextIndex));
             this.transpositionTable = null; // save memory
             return nextIndex;
         }
 
         private int leafReached;
         private int maxLayer;
+        private int fullMoveGenerated;
 
         public int AlphaBetaSearch(int layer)
         {
             leafReached = 0;
+            fullMoveGenerated = 0;
             maxLayer = layer;
             return AlphaBetaSearch(layer, -Evaluator.MaxScore, Evaluator.MaxScore, rootNode, Player.Own);
         }
@@ -168,6 +171,7 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
             if (!node.FullChildrenGenerated)
             {
                 var newMoves = moveGenerator.GenerateMoves()
+                    .OrderBy(i => i)
                     .Where(i => !node.Children.Any(p => p.i == i))
                     .Select(i =>
                     {
@@ -183,6 +187,7 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
                     });
                 node.Children.AddRange(newMoves);
                 node.FullChildrenGenerated = true;
+                fullMoveGenerated++;
             }
             else
             {

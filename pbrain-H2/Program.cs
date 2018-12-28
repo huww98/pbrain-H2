@@ -43,18 +43,16 @@ namespace Huww98.FiveInARow
                     ReservedTime = TimeSpan.FromSeconds(0.2),
                     WarmingUpReservedTime = TimeSpan.FromSeconds(0.7)
                 })
-                .AddSingleton<PbrainAdapter>()
-                .AddSingleton<EngineControl>();
-
+                .AddPbrainAdapter();                
 
             var engine = config.GetValue<KnownEngine>("Engine");
             switch (engine)
             {
                 case KnownEngine.AlphaBeta:
-                    services.AddSingleton<IEngineFactory, AlphaBetaEngineFactory>();
+                    services.AddEngine<AlphaBetaEngine>();
                     break;
                 case KnownEngine.MonteCarlo:
-                    services.AddSingleton<IEngineFactory, MonteCarloEngineFactory>();
+                    services.AddEngine<MonteCarloEngine>();
                     break;
                 default:
                     throw new NotSupportedException("Not supported engine");

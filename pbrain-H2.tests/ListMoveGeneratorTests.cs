@@ -38,9 +38,9 @@ namespace Huww98.FiveInARow.Engine.Tests
         }
 
         [Fact]
-        public void PlaceChessPiece()
+        public void PlaceChessPieceAndTakeBack()
         {
-            Init(out var board, out var moveGenerator, out var _);
+            Init(out var board, out var moveGenerator, out var originExpectedMoves);
 
             var newPos = (2, 3);
             board.PlaceChessPiece(newPos, Player.Opponent);
@@ -52,6 +52,11 @@ namespace Huww98.FiveInARow.Engine.Tests
                 .Select(p => board.FlattenedIndex(p)).OrderBy(i => i);
             var generatedMoves = moveGenerator.GenerateMoves().OrderBy(i => i);
             Assert.Equal(expectedMoves, generatedMoves);
+
+            board.TakeBack(newPos);
+
+            generatedMoves = moveGenerator.GenerateMoves().OrderBy(i => i);
+            Assert.Equal(originExpectedMoves, generatedMoves);
         }
     }
 }
