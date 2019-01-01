@@ -29,6 +29,25 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
         {
             Children.Sort((a, b) => a.node.LastScore.UpperBound - b.node.LastScore.UpperBound);
         }
+
+        public IEnumerable<(long, SearchTreeNode)> GetDescendantsWithHash(ZobristHash hash, Player p)
+        {
+            if (Children == null)
+            {
+                yield break;
+            }
+            foreach (var (i, node) in Children)
+            {
+                hash.Set(i, p);
+                yield return (hash.Hash, node);
+                foreach (var d in node.GetDescendantsWithHash(hash, p.OppositePlayer()))
+                {
+                    yield return d;
+                }
+                hash.Set(i, p);
+            }
+
+        }
     }
 
     public struct ScoreCache

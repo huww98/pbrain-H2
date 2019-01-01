@@ -119,6 +119,7 @@ namespace Huww98.FiveInARow.EngineAdapter
             {
                 FirstPlayer = Player.Own;
             }
+            SyncTimeout();
             var (x, y) = await Engine.Think();
             MoveMade?.Invoke(this, new MoveMadeEventArgs { X = x, Y = y });
             this.warmingUp = false;
@@ -134,7 +135,6 @@ namespace Huww98.FiveInARow.EngineAdapter
             }
             Engine = EngineFactory.CreateEngine(newBoard);
             SyncHasForbiddenPlayer();
-            SyncTimeout();
             SyncExactFive();
 
             var firstMove = moves.Where(m => m.Player == Player.Own || m.Player == Player.Opponent)

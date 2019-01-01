@@ -1,4 +1,5 @@
 ﻿using Huww98.FiveInARow.Engine.AlphaBeta;
+using Huww98.FiveInARow.Engine.MonteCarlo;
 using Huww98.FiveInARow.EngineAdapter;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -16,7 +17,12 @@ namespace Huww98.FiveInARow.Engine.PrefTest
                 {
                     builder.AddConsole();
                 })
+                //.AddEngine<MonteCarloEngine>()
                 .AddEngine<AlphaBetaEngine>()
+                .Configure<AlphaBetaEngineOptions>(options =>
+                {
+                    options.EnableTranspositionTable = true;
+                })
                 .BuildServiceProvider();
 
             var factory = services.GetRequiredService<IEngineFactory>();

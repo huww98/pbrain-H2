@@ -17,6 +17,7 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta.Tests
             board[2, 2] = board[3, 2] = board[5, 2] = Player.Own;
             AlphaBetaEngine engine = new AlphaBetaEngine(new Board(board));
             engine.HasNoTimeLimit();
+            engine.InitializeSearch();
             var score = engine.AlphaBetaSearch(4);
 
             Assert.Equal(Evaluator.MaxScore, score);
@@ -29,6 +30,7 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta.Tests
             board[2, 2] = board[3, 2] = board[4, 2] = board[5, 2] = Player.Opponent;
             AlphaBetaEngine engine = new AlphaBetaEngine(new Board(board));
             engine.HasNoTimeLimit();
+            engine.InitializeSearch();
             var score = engine.AlphaBetaSearch(3);
 
             Assert.Equal(-Evaluator.MaxScore, score);
@@ -44,21 +46,18 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta.Tests
                 = board[10, 8] = board[13, 8] = board[13, 11] = board[8, 11] = Player.Opponent;
 
             AlphaBetaEngine engine = new AlphaBetaEngine(new Board(board));
-            //engine.TraceSource.Listeners.Clear();
-            //engine.TraceSource.Listeners.Add(new TextWriterTraceListener(new StreamWriter(@"C:\Users\huww\Documents\engine.log", false)));
-            //engine.TraceSource.Switch.Level = SourceLevels.All;
 
             engine.HasNoTimeLimit();
             engine.HasForbiddenPlayer = Player.Own;
+            engine.InitializeSearch();
             for (int i = 1; i <= 5; i++)
             {
                 engine.AlphaBetaSearch(i);
             }
             engine.SelfMove((12, 10));
             engine.OpponentMove((12, 8));
+            engine.InitializeSearch();
             var score = engine.AlphaBetaSearch(3); // this will possibly use score cache from previous search
-
-            //AlphaBetaEngine.TraceSource.Flush();
 
             Assert.Equal(-Evaluator.MaxScore, score);
         }
@@ -72,6 +71,7 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta.Tests
             board[2, 2] = board[3, 2] = board[5, 2] = Player.Own;
             AlphaBetaEngine engine = new AlphaBetaEngine(new Board(board), patternTable);
             engine.HasNoTimeLimit();
+            engine.InitializeSearch();
             var score = engine.AlphaBetaSearch(2);
 
             Assert.Equal(100, score);

@@ -1,5 +1,13 @@
 {
-  "Engine": "MonteCarlo",
+  "Engine": "AlphaBeta",
+  "EngineOptions": {
+    "AlphaBeta": {
+      "EnablePruning": true,
+      "EnableKillerTable": false,
+      "EnableChildrenSort": true,
+      "EnableTranspositionTable": true
+    }
+  },
   "Logging": {
     "PBrain": {
       "LogLevel": {

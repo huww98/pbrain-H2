@@ -8,15 +8,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Huww98.FiveInARow
 {
-    enum KnownEngine
+    public enum KnownEngine
     {
         Unknown, AlphaBeta, MonteCarlo
     }
@@ -43,7 +41,8 @@ namespace Huww98.FiveInARow
                     ReservedTime = TimeSpan.FromSeconds(0.2),
                     WarmingUpReservedTime = TimeSpan.FromSeconds(0.7)
                 })
-                .AddPbrainAdapter();                
+                .AddPbrainAdapter()
+                .Configure<AlphaBetaEngineOptions>(config.GetSection("EngineOptions:AlphaBeta"));                
 
             var engine = config.GetValue<KnownEngine>("Engine");
             switch (engine)

@@ -59,6 +59,10 @@ namespace Huww98.FiveInARow.Engine
             this.Hash = anotherHash.Hash;
         }
 
+        /// <summary>
+        /// This method is used both when chess piece placed and take back.
+        /// That is, call this method twice is a no-op.
+        /// </summary>
         public void Set(int i, Player p)
         {
             Hash = NextHash(i, p);

@@ -1,10 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Huww98.FiveInARow.Engine
 {
-    public class KillerTable
+    interface IKillerTable
+    {
+        void NewKiller(int ply, int moveIndex);
+        IEnumerable<int> Killers(int ply);
+    }
+
+    public class KillerTable : IKillerTable
     {
         public const int Slot = 2;
         public const int MaxPly = 16;
@@ -42,6 +49,18 @@ namespace Huww98.FiveInARow.Engine
                 }
                 yield return index;
             }
+        }
+    }
+
+    class NullKillerTable : IKillerTable
+    {
+        public IEnumerable<int> Killers(int ply)
+        {
+            return Enumerable.Empty<int>();
+        }
+
+        public void NewKiller(int ply, int moveIndex)
+        {
         }
     }
 }

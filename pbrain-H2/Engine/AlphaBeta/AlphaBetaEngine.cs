@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,13 +22,17 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
         public Evaluator Evaluator { get; private set; }
         ListMoveGenerator moveGenerator;
         SearchTreeNode rootNode;
-        Dictionary<long, SearchTreeNode> transpositionTable = new Dictionary<long, SearchTreeNode>();
-        KillerTable killerTable = new KillerTable();
+        ITranspositionTable<SearchTreeNode> transpositionTable;
+        IKillerTable killerTable = new KillerTable();
+        AlphaBetaEngineOptions options;
 
         public DateTime ScheduredEndTime { get; set; }
         private readonly PatternTable patternTable;
 
-        public AlphaBetaEngine(Board board, PatternTable patternTable = null, ILogger<AlphaBetaEngine> logger = null)
+        public AlphaBetaEngine(Board board,
+            PatternTable patternTable = null,
+            ILogger<AlphaBetaEngine> logger = null,
+            IOptions<AlphaBetaEngineOptions> options = null)
         {
             if(patternTable == null)
             {
@@ -40,6 +45,7 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
             }
 
             this.logger = logger ?? new NullLogger<AlphaBetaEngine>();
+            this.options = options != null ? options.Value : new AlphaBetaEngineOptions();
 
             this.Board = board;
             this.Evaluator = new Evaluator(this.Board, this.patternTable);
@@ -85,15 +91,28 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
 
         private int Ply(int layer) => maxLayer - layer;
 
-        private int DoSearch()
+        public void InitializeSearch()
         {
             // Reinitialize it so that it does not get too large
-            this.transpositionTable = new Dictionary<long, SearchTreeNode>();
-            this.killerTable = new KillerTable();
-            int maxLayer = 2; // We need to search at least 2 layer to trigger the generation of child nodes.
-            while (true)
+            logger.LogInformation("Initializing transposition table.");
+            this.transpositionTable = options.EnableTranspositionTable ?
+                (ITranspositionTable<SearchTreeNode>)new TranspositionTable<SearchTreeNode>() :
+                new NullTranspositionTable<SearchTreeNode>();
+            foreach (var d in rootNode.GetDescendantsWithHash(Board.ZobristHash, Player.Own))
             {
-                logger.LogInformation("Searching, max layer {0}.", maxLayer);
+                transpositionTable.Add(d.Item1, d.Item2);
+            }
+
+            this.killerTable = options.EnableKillerTable ? (IKillerTable)new KillerTable() : new NullKillerTable();
+        }
+
+        private int DoSearch()
+        {
+            InitializeSearch();
+            // We need to search at least 2 layer to trigger the generation of child nodes.
+            for (int maxLayer = 2; maxLayer <= options.MaxSearchLayer; maxLayer++)
+            {
+                logger.LogInformation("Searching, max layer {MaxLayer}.", maxLayer);
                 AlphaBetaSearch(maxLayer);
                 logger.LogInformation("Search complete, max layer {MaxLayer}, reached leaf: {LeafReached}, full move generated: {FullMoveGenerated}.",
                     maxLayer, leafReached, fullMoveGenerated);
@@ -108,7 +127,6 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
                     logger.LogInformation("Timeout, breaking.");
                     break;
                 }
-                maxLayer++;
             }
             rootNode.SortChildren();
             var nextIndex = rootNode.Children[0].i;
@@ -161,7 +179,8 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
                     var nextNode = node.Children?.SingleOrDefault((p) => p.i == i).node;
                     if (nextNode == default)
                     {
-                        nextNode = new SearchTreeNode();
+                        var hash = Board.ZobristHash.NextHash(i, player);
+                        nextNode = transpositionTable.GetExistsOrNewNode(hash);
                         node.Children.Insert(0, (i, nextNode));
                     }
                     yield return (i, nextNode, MoveOrigin.Killer);
@@ -171,19 +190,12 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
             if (!node.FullChildrenGenerated)
             {
                 var newMoves = moveGenerator.GenerateMoves()
-                    .OrderBy(i => i)
                     .Where(i => !node.Children.Any(p => p.i == i))
                     .Select(i =>
                     {
-                        //var hash = Board.ZobristHash.NextHash(i, player);
-                        //if (!transpositionTable.TryGetValue(hash, out var newNode))
-                        //{
-                        //    newNode = new SearchTreeNode();
-                        //}
-                        // TODO: How to insert record to transpositionTable?
-                        //return (i, newNode);
-
-                        return (i, new SearchTreeNode());
+                        var hash = Board.ZobristHash.NextHash(i, player);
+                        var newNode = transpositionTable.GetExistsOrNewNode(hash);
+                        return (i, newNode);
                     });
                 node.Children.AddRange(newMoves);
                 node.FullChildrenGenerated = true;
@@ -191,7 +203,8 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
             }
             else
             {
-                node.SortChildren();
+                if (options.EnableChildrenSort)
+                    node.SortChildren();
             }
 
             // TODO: maybe no child? chessboard full?
@@ -268,13 +281,16 @@ namespace Huww98.FiveInARow.Engine.AlphaBeta
 
                 if (currentScore >= beta)
                 {
-                    Trace(5, $"Returning. Cut: {nextScore}");
-                    node.NewScore(layer, nextScore);
                     if (origin != MoveOrigin.Killer)
                     {
                         killerTable.NewKiller(Ply(layer), i);
                     }
-                    return currentScore;
+                    if (options.EnablePruning)
+                    {
+                        Trace(5, $"Returning. Cut: {nextScore}");
+                        node.NewScore(layer, nextScore);
+                        return currentScore;
+                    }
                 }
             }
             nextScore.UpperBound = currentScore;

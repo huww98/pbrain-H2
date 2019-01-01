@@ -7,7 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "pbrain-H2", "pbrain-H2\pbra
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "pbrain-H2.tests", "pbrain-H2.tests\pbrain-H2.tests.csproj", "{6D573418-9084-4588-9623-B7D1CD1A355C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrefTest", "PrefTest\PrefTest.csproj", "{6F88E4A1-B84F-4F20-83F1-C23AFAA7AC27}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrefTest", "PrefTest\PrefTest.csproj", "{6F88E4A1-B84F-4F20-83F1-C23AFAA7AC27}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Battle", "Battle\Battle.csproj", "{E9CD47D6-54F7-4D99-B337-7AFE5B638D1C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{6F88E4A1-B84F-4F20-83F1-C23AFAA7AC27}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F88E4A1-B84F-4F20-83F1-C23AFAA7AC27}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6F88E4A1-B84F-4F20-83F1-C23AFAA7AC27}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9CD47D6-54F7-4D99-B337-7AFE5B638D1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9CD47D6-54F7-4D99-B337-7AFE5B638D1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9CD47D6-54F7-4D99-B337-7AFE5B638D1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9CD47D6-54F7-4D99-B337-7AFE5B638D1C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

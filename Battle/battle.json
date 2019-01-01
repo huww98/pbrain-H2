@@ -1,0 +1,16 @@
+{
+  "Players": [
+    {
+      "Name": "MonteCarlo",
+      "Engine": "MonteCarlo"
+    },
+    {
+      "Name": "AlphaBeta",
+      "Engine": "AlphaBeta",
+      "Options": {
+        "EnableKillerTable": false,
+        "EnableChildrenSort": false
+      }
+    }
+  ]
+}
