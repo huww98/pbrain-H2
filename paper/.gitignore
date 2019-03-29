@@ -1,4 +1,5 @@
-*
+/*
 !.gitignore
 !*.tex
 !*.pdf
+!assets
