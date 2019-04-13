@@ -93,11 +93,25 @@
 
 \paragraph{性能测试} 对于AI来说，性能是十分重要的，性能越高，搜索的内容就越多，在对弈中就越有优势。为此我专门编写了一个用于性能测试的可执行文件，它直接调用引擎的核心模块。配合第三方的性能评测工具可以很方便的判断代码在哪个部分消耗了更多时间，哪些语句执行的次数更多等等。
 
-\paragraph{模块化} 对于软件来说，可修改性是重要的质量属性。而模块化是实现该质量属性的主要方法。图表 2展示了本程序的模块化层次结构。每一个模块都具有良好的封装，可重用，可替换。
+\begin{figure}
+    \centering
+    \includegraphics[width=0.6\textwidth]{assets/modules.pdf}
+    \caption{程序整体模块化层次结构示意图}
+    \label{fig:modules}
+\end{figure}
+
+\paragraph{模块化} 对于软件来说，可修改性是重要的质量属性。而模块化是实现该质量属性的主要方法。图\ref{fig:modules}展示了本程序的模块化层次结构。每一个模块都具有良好的封装，可重用，可替换。
 
 \section{实验}
 
-\paragraph{执行演示} 该引擎的.NET Framework与.NET Core可执行文件均可以正常于piskvork程序中加载运行，并展现出较强的实力。
+\begin{figure}
+    \centering
+    \includegraphics[width=0.4\textwidth]{assets/executePiskvork.png}
+    \caption{执行效果演示}
+    \label{fig:piskvork}
+\end{figure}
+
+\paragraph{执行演示} 该引擎的.NET Framework与.NET Core可执行文件均可以正常于piskvork程序中加载运行，并展现出较强的实力。图\ref{fig:piskvork}为我与我的引擎对战的截图
 
 \paragraph{棋力评测} 本引擎棋力较高，以本人的棋力无法战胜AI。故在评测时只能以其他AI的棋力作为参考。本引擎在班级中举办的比赛中获得了第一的成绩。但是在AI中比较时，老师提供的test程序棋力非常高强，即使本引擎使用10秒搜索时间而test只使用0.5秒，我依然无法战胜它。而且test可以提前20步左右就预见自己的胜利，相比之下本引擎只能提前8步左右。由此看来目前AI所能达到最高的棋力远不止于本引擎的水平。作为棋力的对比，我实现了一个简单的蒙特卡洛树搜索算法，该算法也具有不俗的实力，我本人也无法击败它。
 
@@ -114,7 +128,7 @@
         本引擎蒙特卡洛树搜索 & negamax & 22 & 8\\
         本引擎关闭剪枝 & negamax & 2 & 8 & \ref{item:eff:alphaBeta}\\
         本引擎Alpha Beta & 本引擎关闭杀手启发 & 7 & 3 & \ref{item:eff:killer}\\
-        本引擎关闭杀手启发 & 本引擎关闭杀手启发和子节点排序 & 8 & 2 & \ref{item:eff:killer}\\
+        本引擎关闭杀手启发 & 本引擎关闭杀手启发和子节点排序 & 8 & 2 & \ref{item:eff:order}\\
         本引擎蒙特卡洛树搜索 & 本引擎关闭杀手启发和子节点排序 & 5 & 5 & \ref{item:eff:order}\\
         本引擎Alpha Beta & 本引擎关闭转置表 & 27 & 23 & \ref{item:eff:transpose}\\
     \end{tabular}
@@ -133,7 +147,13 @@
     \item \label{item:eff:transpose} 转置表效果：测试转置表对棋力的影响。转置表在棋力的提升中表现并不明显，虽然转置表在第10层时能将搜索的节点数量降低到原来的40\%左右，但转置表本身也会引发一些额外的开销，转置表并未能有效地提高搜索的层数。
 \end{enumerate}
 
-\paragraph{棋力评测结果} 图表 4展示了此次棋力评测的结果。test引擎由于棋力太高，未尝败绩，故无法对其棋力做出准确评判，只能说其棋力远高于本次评测中的其他引擎。此处使用Bayesian Elo程序\cite{WEBSITE:BayesianELO}基于以上共计150场对战结果对不同的引擎及其不同配置的棋力进行评分。此处评分结果仅有相对意义，即本表中的分数可以互相比较，但本结果不应与其他地方的Elo评分进行比较。Elo评分的含义如下，其中$e(\cdot)$为玩家的Elo评分。例如当双方分差200分时，强者击败弱者的概率约为76\%。
+\begin{figure}
+    \includegraphics[width=\textwidth]{assets/elo.png}
+    \caption{不同引擎及配置的Elo评分}
+    \label{fig:elo}
+\end{figure}
+
+\paragraph{棋力评测结果} 图\ref{fig:elo}展示了此次棋力评测的结果。test引擎由于棋力太高，未尝败绩，故无法对其棋力做出准确评判，只能说其棋力远高于本次评测中的其他引擎。此处使用Bayesian Elo程序\cite{WEBSITE:BayesianELO}基于以上共计150场对战结果对不同的引擎及其不同配置的棋力进行评分。此处评分结果仅有相对意义，即本表中的分数可以互相比较，但本结果不应与其他地方的Elo评分进行比较。Elo评分的含义如下，其中$e(\cdot)$为玩家的Elo评分。例如当双方分差200分时，强者击败弱者的概率约为76\%。
 
 \begin{equation}
     P(\text{a击败b})=\frac{1}{1+10^{(e(b)-e(a))/400}}
