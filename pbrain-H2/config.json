@@ -3,7 +3,7 @@
   "EngineOptions": {
     "AlphaBeta": {
       "EnablePruning": true,
-      "EnableKillerTable": false,
+      "EnableKillerTable": true,
       "EnableChildrenSort": true,
       "EnableTranspositionTable": true
     }

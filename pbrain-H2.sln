@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2048
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.352
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "pbrain-H2", "pbrain-H2\pbrain-H2.csproj", "{102E9302-3AA2-4B08-96F8-0CF05A90AE61}"
 EndProject
@@ -9,7 +9,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "pbrain-H2.tests", "pbrain-H
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrefTest", "PrefTest\PrefTest.csproj", "{6F88E4A1-B84F-4F20-83F1-C23AFAA7AC27}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Battle", "Battle\Battle.csproj", "{E9CD47D6-54F7-4D99-B337-7AFE5B638D1C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Battle", "Battle\Battle.csproj", "{E9CD47D6-54F7-4D99-B337-7AFE5B638D1C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{603EFCC1-8571-49EF-8689-9D506373B613}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

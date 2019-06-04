@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net472;netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks>net472;netcoreapp2.2</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <RootNamespace>Huww98.FiveInARow.Engine.PrefTest</RootNamespace>
   </PropertyGroup>
